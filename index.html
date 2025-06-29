@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -232,16 +232,24 @@
 
     function renderStudents() {
       canvas.innerHTML = "";
-      classes[currentClass].forEach(student => {
+      classes[currentClass].forEach((student, index) => {
         const div = document.createElement("div");
         div.className = `student ${student.color}`;
         div.style.left = `${student.x}px`;
         div.style.top = `${student.y}px`;
 
-        const nameSpan = document.createElement("span");
+       const numberSpan = document.createElement("div");
+        numberSpan.textContent = index + 1; // index starts at 0
+        numberSpan.style.fontSize = "18px";
+        numberSpan.style.fontWeight = "bold";
+        numberSpan.style.marginBottom = "5px";
+
+        const nameSpan = document.createElement("div");
         nameSpan.textContent = student.name;
 
+        div.appendChild(numberSpan);
         div.appendChild(nameSpan);
+
 
         div.addEventListener("dblclick", () => {
           const newName = prompt("Enter new student name:", student.name);
