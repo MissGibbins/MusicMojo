@@ -118,5 +118,203 @@
   </div>
 
   <script>
+    const canvas = document.getElementById("canvas");
+    const classSelector = document.getElementById("classSelector");
+    const addStudentBtn = document.getElementById("addStudent");
+    const reasonModal = document.getElementById("reasonModal");
+    const reasonButtons = document.querySelectorAll(".reasonBtn");
+    const log = [];
+
+    let currentClass = "Class 1";
+    let pendingStudent = null;
+
+    // Load or initialize classes
     let classes = {};
-    const savedData = localStorage.getItem("class
+    const savedData = localStorage.getItem("classroomData");
+    if (savedData) {
+      classes = JSON.parse(savedData);
+    }
+
+    // Ensure all 20 classes always exist
+    for (let i = 1; i <= 20; i++) {
+      const clsName = "Class " + i;
+      if (!classes[clsName]) {
+        classes[clsName] = [];
+      }
+    }
+
+    // Build dropdown
+    classSelector.innerHTML = "";
+    Object.keys(classes).forEach(cls => {
+      const option = document.createElement("option");
+      option.value = cls;
+      option.textContent = cls;
+      classSelector.appendChild(option);
+    });
+    classSelector.value = currentClass;
+
+    classSelector.addEventListener("change", () => {
+      saveData();
+      currentClass = classSelector.value;
+      if (classes[currentClass].length === 0) {
+        for (let i = 1; i <= 5; i++) {
+          classes[currentClass].push({
+            name: "Student " + i,
+            color: "green",
+            x: 20 + i * 110,
+            y: 20
+          });
+        }
+      }
+      renderStudents();
+    });
+
+    // If starting fresh, add default students
+    if (classes[currentClass].length === 0) {
+      for (let i = 1; i <= 5; i++) {
+        classes[currentClass].push({
+          name: "Student " + i,
+          color: "green",
+          x: 20 + i * 110,
+          y: 20
+        });
+      }
+    }
+
+    addStudentBtn.addEventListener("click", () => {
+      classes[currentClass].push({
+        name: "New Student",
+        color: "green",
+        x: 50,
+        y: 50
+      });
+      saveData();
+      renderStudents();
+    });
+
+    function renderStudents() {
+      canvas.innerHTML = "";
+      classes[currentClass].forEach(student => {
+        const div = document.createElement("div");
+        div.className = `student ${student.color}`;
+        div.style.left = `${student.x}px`;
+        div.style.top = `${student.y}px`;
+
+        const input = document.createElement("input");
+        input.value = student.name;
+
+        input.addEventListener("change", e => {
+          student.name = e.target.value;
+          saveData();
+        });
+
+        div.appendChild(input);
+
+        div.addEventListener("click", (e) => {
+          if (e.detail === 1) {
+            setTimeout(() => {
+              if (!div.dragging) {
+                pendingStudent = student;
+                showModal();
+              }
+            }, 200);
+          }
+        });
+
+        makeDraggable(div, student);
+
+        canvas.appendChild(div);
+      });
+    }
+
+    reasonButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (pendingStudent) {
+          const action = btn.getAttribute("data-action");
+          if (action === "yellow") {
+            pendingStudent.color = "yellow";
+          } else if (action === "red") {
+            pendingStudent.color = "red";
+          } else {
+            pendingStudent.color = "green";
+          }
+
+          log.push({
+            student: pendingStudent.name,
+            color: pendingStudent.color,
+            reason: btn.textContent,
+            time: new Date().toLocaleString()
+          });
+
+          pendingStudent = null;
+          hideModal();
+          saveData();
+          renderStudents();
+        }
+      });
+    });
+
+    reasonModal.addEventListener("click", (e) => {
+      if (e.target === reasonModal) {
+        hideModal();
+      }
+    });
+
+    function showModal() {
+      reasonModal.style.display = "flex";
+    }
+
+    function hideModal() {
+      reasonModal.style.display = "none";
+    }
+
+    function makeDraggable(el, student) {
+      let offsetX, offsetY;
+      let isDragging = false;
+
+      el.addEventListener("mousedown", e => {
+        isDragging = true;
+        el.dragging = true;
+        offsetX = e.clientX - el.offsetLeft;
+        offsetY = e.clientY - el.offsetTop;
+      });
+
+      document.addEventListener("mousemove", e => {
+        if (isDragging) {
+          student.x = e.clientX - offsetX;
+          student.y = e.clientY - offsetY;
+          el.style.left = student.x + "px";
+          el.style.top = student.y + "px";
+          saveData();
+        }
+      });
+
+      document.addEventListener("mouseup", () => {
+        isDragging = false;
+        el.dragging = false;
+      });
+    }
+
+    document.getElementById("exportLog").addEventListener("click", () => {
+      let csv = "Student,Color,Reason,Time\n";
+      log.forEach(entry => {
+        csv += `${entry.student},${entry.color},${entry.reason || ""},${entry.time}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "class_log.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    function saveData() {
+      localStorage.setItem("classroomData", JSON.stringify(classes));
+    }
+
+    renderStudents();
+  </script>
+</body>
+</html>
