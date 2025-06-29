@@ -87,6 +87,10 @@
     .reasonBtn:hover {
       background: #0056b3;
     }
+
+    #addStudent {
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -94,6 +98,7 @@
 
   <label for="classSelector">Select Class:</label>
   <select id="classSelector"></select>
+  <button id="addStudent">+ Add Student</button>
 
   <div id="canvas"></div>
 
@@ -102,197 +107,16 @@
   <!-- Modal -->
   <div id="reasonModal">
     <div id="reasonModalContent">
-      <h3>Select Reason</h3>
-      <button class="reasonBtn">Talking</button>
-      <button class="reasonBtn">Off Task</button>
-      <button class="reasonBtn">Unprepared</button>
-      <button class="reasonBtn">Disruptive</button>
+      <h3>Select Action</h3>
+      <button class="reasonBtn" data-action="yellow">Talking</button>
+      <button class="reasonBtn" data-action="yellow">Off Task</button>
+      <button class="reasonBtn" data-action="yellow">Unprepared</button>
+      <button class="reasonBtn" data-action="yellow">Disruptive</button>
+      <button class="reasonBtn" data-action="red">Immediate Red</button>
+      <button class="reasonBtn" data-action="green">Back to Green</button>
     </div>
   </div>
 
   <script>
-    const classes = {};
-    for (let i = 1; i <= 20; i++) {
-      classes["Class " + i] = [];
-    }
-
-    let currentClass = "Class 1";
-    const canvas = document.getElementById("canvas");
-    const classSelector = document.getElementById("classSelector");
-    const log = [];
-
-    const reasonModal = document.getElementById("reasonModal");
-    const reasonButtons = document.querySelectorAll(".reasonBtn");
-    let pendingStudent = null;
-
-    Object.keys(classes).forEach(cls => {
-      const option = document.createElement("option");
-      option.value = cls;
-      option.textContent = cls;
-      classSelector.appendChild(option);
-    });
-
-    classSelector.addEventListener("change", () => {
-      saveCurrentClass();
-      currentClass = classSelector.value;
-      if (classes[currentClass].length === 0) {
-        // Add default students
-        for (let i = 1; i <= 5; i++) {
-          classes[currentClass].push({
-            name: "Student " + i,
-            color: "green",
-            x: 20 + i * 110,
-            y: 20
-          });
-        }
-      }
-      renderStudents();
-    });
-
-    // Add initial students
-    for (let i = 1; i <= 5; i++) {
-      classes[currentClass].push({
-        name: "Student " + i,
-        color: "green",
-        x: 20 + i * 110,
-        y: 20
-      });
-    }
-
-    function renderStudents() {
-      canvas.innerHTML = "";
-      classes[currentClass].forEach(student => {
-        const div = document.createElement("div");
-        div.className = `student ${student.color}`;
-        div.style.left = `${student.x}px`;
-        div.style.top = `${student.y}px`;
-
-        const input = document.createElement("input");
-        input.value = student.name;
-
-        input.addEventListener("change", e => {
-          student.name = e.target.value;
-        });
-
-        div.appendChild(input);
-
-        div.addEventListener("click", (e) => {
-          // Stop drag click from triggering
-          if (e.detail === 1) {
-            setTimeout(() => {
-              if (!div.dragging) {
-                handleClick(student);
-              }
-            }, 200);
-          }
-        });
-
-        makeDraggable(div, student);
-
-        canvas.appendChild(div);
-      });
-    }
-
-    function handleClick(student) {
-      if (student.color === "green") {
-        pendingStudent = student;
-        showModal();
-      } else if (student.color === "yellow") {
-        student.color = "red";
-        log.push({
-          student: student.name,
-          color: "red",
-          time: new Date().toLocaleString()
-        });
-        renderStudents();
-      } else {
-        student.color = "green";
-        log.push({
-          student: student.name,
-          color: "green",
-          time: new Date().toLocaleString()
-        });
-        renderStudents();
-      }
-    }
-
-    reasonButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (pendingStudent) {
-          pendingStudent.color = "yellow";
-          log.push({
-            student: pendingStudent.name,
-            color: "yellow",
-            reason: btn.textContent,
-            time: new Date().toLocaleString()
-          });
-          pendingStudent = null;
-          hideModal();
-          renderStudents();
-        }
-      });
-    });
-
-    reasonModal.addEventListener("click", (e) => {
-      if (e.target === reasonModal) {
-        hideModal();
-      }
-    });
-
-    function showModal() {
-      reasonModal.style.display = "flex";
-    }
-
-    function hideModal() {
-      reasonModal.style.display = "none";
-    }
-
-    function makeDraggable(el, student) {
-      let offsetX, offsetY;
-      let isDragging = false;
-
-      el.addEventListener("mousedown", e => {
-        isDragging = true;
-        el.dragging = true;
-        offsetX = e.clientX - el.offsetLeft;
-        offsetY = e.clientY - el.offsetTop;
-      });
-
-      document.addEventListener("mousemove", e => {
-        if (isDragging) {
-          student.x = e.clientX - offsetX;
-          student.y = e.clientY - offsetY;
-          el.style.left = student.x + "px";
-          el.style.top = student.y + "px";
-        }
-      });
-
-      document.addEventListener("mouseup", () => {
-        isDragging = false;
-        el.dragging = false;
-      });
-    }
-
-    document.getElementById("exportLog").addEventListener("click", () => {
-      let csv = "Student,Color,Reason,Time\n";
-      log.forEach(entry => {
-        csv += `${entry.student},${entry.color},${entry.reason || ""},${entry.time}\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "class_log.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    function saveCurrentClass() {
-      // Positions auto-updated
-    }
-
-    renderStudents();
-  </script>
-</body>
-</html>
+    let classes = {};
+    const savedData = localStorage.getItem("class
