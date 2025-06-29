@@ -80,4 +80,139 @@
 <body>
   <h1>Classroom Tracker</h1>
 
-  <label
+  <label for="classSelector">Select Class:</label>
+  <select id="classSelector"></select>
+
+  <div id="studentContainer"></div>
+
+  <button id="exportLog">Export Log</button>
+
+  <!-- Modal -->
+  <div id="reasonModal">
+    <div id="reasonModalContent">
+      <h3>Select Reason</h3>
+      <button class="reasonBtn">Talking</button>
+      <button class="reasonBtn">Off Task</button>
+      <button class="reasonBtn">Unprepared</button>
+      <button class="reasonBtn">Disruptive</button>
+    </div>
+  </div>
+
+  <script>
+    const classes = {};
+    for (let i = 1; i <= 20; i++) {
+      classes["Class " + i] = [];
+    }
+
+    let currentClass = "Class 1";
+    const container = document.getElementById("studentContainer");
+    const classSelector = document.getElementById("classSelector");
+    const log = [];
+
+    const reasonModal = document.getElementById("reasonModal");
+    const reasonButtons = document.querySelectorAll(".reasonBtn");
+
+    let pendingStudent = null;
+
+    Object.keys(classes).forEach(cls => {
+      const option = document.createElement("option");
+      option.value = cls;
+      option.textContent = cls;
+      classSelector.appendChild(option);
+    });
+
+    classSelector.addEventListener("change", () => {
+      saveCurrentClass();
+      currentClass = classSelector.value;
+      renderStudents();
+    });
+
+    for (let i = 1; i <= 5; i++) {
+      classes[currentClass].push({
+        name: "Student " + i,
+        color: "green"
+      });
+    }
+
+    function renderStudents() {
+      container.innerHTML = "";
+      classes[currentClass].forEach((student, index) => {
+        const div = document.createElement("div");
+        div.className = `student ${student.color}`;
+
+        const input = document.createElement("input");
+        input.value = student.name;
+
+        input.addEventListener("change", e => {
+          student.name = e.target.value;
+        });
+
+        div.appendChild(input);
+
+        div.addEventListener("click", () => {
+          if (student.color === "green") {
+            pendingStudent = student;
+            showModal();
+          } else if (student.color === "yellow") {
+            student.color = "red";
+            log.push({
+              student: student.name,
+              color: "red",
+              time: new Date().toLocaleString()
+            });
+            renderStudents();
+          } else {
+            student.color = "green";
+            log.push({
+              student: student.name,
+              color: "green",
+              time: new Date().toLocaleString()
+            });
+            renderStudents();
+          }
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    reasonButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (pendingStudent) {
+          pendingStudent.color = "yellow";
+          log.push({
+            student: pendingStudent.name,
+            color: "yellow",
+            reason: btn.textContent,
+            time: new Date().toLocaleString()
+          });
+          pendingStudent = null;
+          hideModal();
+          renderStudents();
+        }
+      });
+    });
+
+    function showModal() {
+      reasonModal.style.display = "flex";
+    }
+
+    function hideModal() {
+      reasonModal.style.display = "none";
+    }
+
+    document.getElementById("exportLog").addEventListener("click", () => {
+      const logStr = JSON.stringify(log, null, 2);
+      const blob = new Blob([logStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "class_log.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    renderStudents();
+  </script>
+</body>
+</html>
