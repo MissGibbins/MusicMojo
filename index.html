@@ -54,7 +54,7 @@
       margin-top: 20px;
     }
 
-    /* Prettier Modal */
+    /* Modal */
     #reasonModal {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -85,7 +85,7 @@
     }
 
     .yellowBtn {
-      background: #facc15; /* bright yellow */
+      background: #facc15;
       color: #000;
     }
 
@@ -109,7 +109,7 @@
       background: #16a34a;
     }
 
-    #addStudent {
+    #addStudent, #renameClass {
       margin-left: 10px;
     }
   </style>
@@ -119,6 +119,7 @@
 
   <label for="classSelector">Select Class:</label>
   <select id="classSelector"></select>
+  <button id="renameClass">✏️ Rename Class</button>
   <button id="addStudent">+ Add Student</button>
 
   <div id="canvas"></div>
@@ -129,18 +130,19 @@
   <div id="reasonModal">
     <div id="reasonModalContent">
       <h3>Select Action</h3>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Talking</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Off Task</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Unprepared</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Disruptive</button>
+      <button class="reasonBtn redBtn" data-action="red">Immediate Red</button>
       <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
-      <button class="reasonBtn redBtn" data-action="red">Red</button>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById("canvas");
     const classSelector = document.getElementById("classSelector");
+    const renameClassBtn = document.getElementById("renameClass");
     const addStudentBtn = document.getElementById("addStudent");
     const reasonModal = document.getElementById("reasonModal");
     const reasonButtons = document.querySelectorAll(".reasonBtn");
@@ -164,14 +166,8 @@
       }
     }
 
-    // Build dropdown
-    classSelector.innerHTML = "";
-    Object.keys(classes).forEach(cls => {
-      const option = document.createElement("option");
-      option.value = cls;
-      option.textContent = cls;
-      classSelector.appendChild(option);
-    });
+    buildDropdown();
+
     classSelector.value = currentClass;
 
     classSelector.addEventListener("change", () => {
@@ -190,7 +186,20 @@
       renderStudents();
     });
 
-    // If starting fresh, add default students
+    renameClassBtn.addEventListener("click", () => {
+      const newName = prompt("Enter a new name for this class:", currentClass);
+      if (newName && newName.trim() !== "" && !classes[newName]) {
+        classes[newName] = classes[currentClass];
+        delete classes[currentClass];
+        currentClass = newName;
+        buildDropdown();
+        classSelector.value = currentClass;
+        saveData();
+      } else {
+        alert("Invalid name or name already exists.");
+      }
+    });
+
     if (classes[currentClass].length === 0) {
       for (let i = 1; i <= 5; i++) {
         classes[currentClass].push({
@@ -212,6 +221,16 @@
       saveData();
       renderStudents();
     });
+
+    function buildDropdown() {
+      classSelector.innerHTML = "";
+      Object.keys(classes).forEach(cls => {
+        const option = document.createElement("option");
+        option.value = cls;
+        option.textContent = cls;
+        classSelector.appendChild(option);
+      });
+    }
 
     function renderStudents() {
       canvas.innerHTML = "";
