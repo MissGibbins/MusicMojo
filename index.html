@@ -73,16 +73,31 @@
     }
 
     .reasonBtn {
-      display: block;
-      margin: 10px auto;
-      width: 200px;
-      padding: 10px;
-      border: none;
-      background: #007bff;
-      color: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+      .yellowBtn {
+        background: #facc15; /* bright yellow */
+        color: #000;
+      }
+
+      .yellowBtn:hover {
+        background: #eab308; /* darker yellow on hover */
+      }
+
+      .redBtn {
+        background: #ef4444; /* red */
+      }
+
+      .redBtn:hover {
+        background: #dc2626;
+      }
+
+      .greenBtn {
+        background: #22c55e; /* green */
+      }
+
+      .greenBtn:hover {
+         background: #16a34a;
+      }
+
 
     .reasonBtn:hover {
       background: #0056b3;
@@ -108,12 +123,12 @@
   <div id="reasonModal">
     <div id="reasonModalContent">
       <h3>Select Action</h3>
-      <button class="reasonBtn" data-action="green">Back to Green</button>
-      <button class="reasonBtn" data-action="yellow">Talking</button>
-      <button class="reasonBtn" data-action="yellow">Off Task</button>
-      <button class="reasonBtn" data-action="yellow">Unprepared</button>
-      <button class="reasonBtn" data-action="yellow">Disruptive</button>
-      <button class="reasonBtn" data-action="red">Immediate Red</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Talking</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Off Task</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Unprepared</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Disruptive</button>
+      <button class="reasonBtn redBtn" data-action="red">Immediate Red</button>
+      <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
     </div>
   </div>
 
