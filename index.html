@@ -23,8 +23,8 @@
     .student {
       width: 100px;
       height: 100px;
-      background-color: #22C55F;
-      color: white;
+      background-color: #22C55F; /* default green */
+      color: white; /* default text color */
       display: flex;
       justify-content: center;
       align-items: center;
@@ -33,31 +33,19 @@
       position: absolute;
       flex-direction: column;
       border-radius: 8px;
-    }
-
-    .student input {
-      background-color: #22C55F; /* same green as the box */
-      color: white; /* white text */
-      border: none; /* no border */
-      text-align: center;
-      width: 90px;
       font-size: 14px;
-      outline: none; /* no blue outline on click */
+      text-align: center;
+      padding: 10px;
     }
 
     .yellow {
-      background-color: yellow;
-      color: black;
+      background-color: #facc15; /* bright yellow */
+      color: #000; /* black text on yellow */
     }
 
     .red {
-      background-color: red;
-    }
-
-    input {
-      width: 90px;
-      border: none;
-      text-align: center;
+      background-color: #ef4444; /* red */
+      color: #fff; /* white text on red */
     }
 
     button {
@@ -95,7 +83,7 @@
     }
 
     .yellowBtn {
-      background: #facc15;
+      background: #facc15; /* yellow */
       color: #000;
     }
 
@@ -104,7 +92,7 @@
     }
 
     .redBtn {
-      background: #ef4444;
+      background: #ef4444; /* red */
     }
 
     .redBtn:hover {
@@ -112,7 +100,7 @@
     }
 
     .greenBtn {
-      background: #22C55F;
+      background: #22C55F; /* your green */
     }
 
     .greenBtn:hover {
@@ -141,11 +129,11 @@
     <div id="reasonModalContent">
       <h3>Select Action</h3>
       <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Talking</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Off Task</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Unprepared</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Disruptive</button>
-      <button class="reasonBtn redBtn" data-action="red">Immediate Red</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
+      <button class="reasonBtn redBtn" data-action="red">Writing Reflection, Call Home</button>
     </div>
   </div>
 
@@ -184,7 +172,7 @@
       saveData();
       currentClass = classSelector.value;
       if (classes[currentClass].length === 0) {
-        for (let i = 1; i <= 16; i++) {
+        for (let i = 1; i <= 5; i++) {
           classes[currentClass].push({
             name: "Student " + i,
             color: "green",
@@ -211,7 +199,7 @@
     });
 
     if (classes[currentClass].length === 0) {
-      for (let i = 1; i <= 16; i++) {
+      for (let i = 1; i <= 5; i++) {
         classes[currentClass].push({
           name: "Student " + i,
           color: "green",
@@ -250,15 +238,19 @@
         div.style.left = `${student.x}px`;
         div.style.top = `${student.y}px`;
 
-        const input = document.createElement("input");
-        input.value = student.name;
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = student.name;
 
-        input.addEventListener("change", e => {
-          student.name = e.target.value;
-          saveData();
+        div.appendChild(nameSpan);
+
+        div.addEventListener("dblclick", () => {
+          const newName = prompt("Enter new student name:", student.name);
+          if (newName && newName.trim() !== "") {
+            student.name = newName.trim();
+            saveData();
+            renderStudents();
+          }
         });
-
-        div.appendChild(input);
 
         div.addEventListener("click", (e) => {
           if (e.detail === 1) {
