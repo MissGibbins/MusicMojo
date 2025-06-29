@@ -79,7 +79,7 @@
       color: #fff;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: px;
     }
 
     .yellowBtn {
@@ -133,7 +133,7 @@
       <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
       <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
       <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
-      <button class="reasonBtn redBtn" data-action="red">Writing Reflection, Call Home</button>
+      <button class="reasonBtn redBtn" data-action="red">Reflection, Call Home</button>
     </div>
   </div>
 
@@ -172,7 +172,7 @@
       saveData();
       currentClass = classSelector.value;
       if (classes[currentClass].length === 0) {
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 14; i++) {
           classes[currentClass].push({
             name: "Student " + i,
             color: "green",
@@ -199,7 +199,7 @@
     });
 
     if (classes[currentClass].length === 0) {
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 14; i++) {
         classes[currentClass].push({
           name: "Student " + i,
           color: "green",
