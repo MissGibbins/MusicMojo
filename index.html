@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -206,6 +206,22 @@
       font-size: 14px;
     }
 
+    .actionBtn {
+      background-color: #22C55F; /* green for brand */
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      margin-left: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s ease;
+    }
+
+    .actionBtn:hover {
+      background-color: #16a34a;
+    }
+
   </style>
 </head>
 <body>
@@ -216,9 +232,9 @@
 
   <label for="classSelector">Select Class:</label>
   <select id="classSelector"></select>
-  <button id="renameClass">✏️ Rename Class</button>
-  <button id="addStudent">+ Add Student</button>
-  <button id="makeGroups">🎲 Make Random Groups</button>
+  <button id="renameClass" class="actionBtn">✏️ Rename Class</button>
+  <button id="addStudent" class="actionBtn">+ Add Student</button>
+  <button id="makeGroups" class="actionBtn">🎲 Make Random Groups</button>
 
   <div id="canvas"></div>
 
