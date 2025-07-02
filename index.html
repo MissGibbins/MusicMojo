@@ -1,12 +1,28 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Classroom Tracker</title>
+  <title>MusicMojo Classroom Tracker</title>
   <style>
     body {
       font-family: sans-serif;
       margin: 20px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    header img {
+      height: 80px;
+      margin-right: 20px;
+    }
+
+    header h1 {
+      font-size: 32px;
+      margin: 0;
     }
 
     #classSelector {
@@ -22,9 +38,9 @@
 
     .student {
       width: 100px;
-      height: 80px;
-      background-color: #22C55F; /* default green */
-      color: white; /* default text color */
+      height: 100px;
+      background-color: #22C55F;
+      color: white;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -39,13 +55,13 @@
     }
 
     .yellow {
-      background-color: #facc15; /* bright yellow */
-      color: #000; /* black text on yellow */
+      background-color: #facc15;
+      color: #000;
     }
 
     .red {
-      background-color: #ef4444; /* red */
-      color: #fff; /* white text on red */
+      background-color: #ef4444;
+      color: #fff;
     }
 
     button {
@@ -79,11 +95,11 @@
       color: #fff;
       border-radius: 6px;
       cursor: pointer;
-      font-size: px;
+      font-size: 16px;
     }
 
     .yellowBtn {
-      background: #facc15; /* yellow */
+      background: #facc15;
       color: #000;
     }
 
@@ -92,7 +108,7 @@
     }
 
     .redBtn {
-      background: #ef4444; /* red */
+      background: #ef4444;
     }
 
     .redBtn:hover {
@@ -100,7 +116,7 @@
     }
 
     .greenBtn {
-      background: #22C55F; /* your green */
+      background: #22C55F;
     }
 
     .greenBtn:hover {
@@ -113,7 +129,10 @@
   </style>
 </head>
 <body>
-  <h1>Classroom Tracker</h1>
+  <header>
+    <img src="MusicMojo logo.png" alt="MusicMojo Logo" />
+    <h1>MusicMojo Classroom Tracker</h1>
+  </header>
 
   <label for="classSelector">Select Class:</label>
   <select id="classSelector"></select>
@@ -128,12 +147,12 @@
   <div id="reasonModal">
     <div id="reasonModalContent">
       <h3>Select Action</h3>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Talking</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Off Task</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Unprepared</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Disruptive</button>
+      <button class="reasonBtn redBtn" data-action="red">Immediate Red</button>
       <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
-      <button class="reasonBtn redBtn" data-action="red">Reflection, Call Home</button>
     </div>
   </div>
 
@@ -149,14 +168,12 @@
     let currentClass = "Class 1";
     let pendingStudent = null;
 
-    // Load or initialize classes
     let classes = {};
     const savedData = localStorage.getItem("classroomData");
     if (savedData) {
       classes = JSON.parse(savedData);
     }
 
-    // Ensure all 20 classes always exist
     for (let i = 1; i <= 20; i++) {
       const clsName = "Class " + i;
       if (!classes[clsName]) {
@@ -172,7 +189,7 @@
       saveData();
       currentClass = classSelector.value;
       if (classes[currentClass].length === 0) {
-        for (let i = 1; i <= 14; i++) {
+        for (let i = 1; i <= 5; i++) {
           classes[currentClass].push({
             name: "Student " + i,
             color: "green",
@@ -199,7 +216,7 @@
     });
 
     if (classes[currentClass].length === 0) {
-      for (let i = 1; i <= 14; i++) {
+      for (let i = 1; i <= 5; i++) {
         classes[currentClass].push({
           name: "Student " + i,
           color: "green",
@@ -238,8 +255,8 @@
         div.style.left = `${student.x}px`;
         div.style.top = `${student.y}px`;
 
-       const numberSpan = document.createElement("div");
-        numberSpan.textContent = index + 1; // index starts at 0
+        const numberSpan = document.createElement("div");
+        numberSpan.textContent = index + 1;
         numberSpan.style.fontSize = "18px";
         numberSpan.style.fontWeight = "bold";
         numberSpan.style.marginBottom = "5px";
@@ -249,7 +266,6 @@
 
         div.appendChild(numberSpan);
         div.appendChild(nameSpan);
-
 
         div.addEventListener("dblclick", () => {
           const newName = prompt("Enter new student name:", student.name);
