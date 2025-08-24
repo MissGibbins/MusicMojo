@@ -126,19 +126,16 @@ renameClassBtn.addEventListener("click", async () => {
   buildDropdown();
 });
 
-// + New Class button with student number prompt
+// + New Class button
 newClassBtn.addEventListener("click", async () => {
   const name = prompt("Enter name for new class:");
   if (!name || classes[name]) return alert("Invalid or duplicate class name!");
-
   let num = parseInt(prompt("How many students should this class start with?", "14"));
   if (isNaN(num) || num < 0) num = 0;
-
   const students = [];
   for (let i = 1; i <= num; i++) {
     students.push({ name: "Student " + i, number: i, color: "green", x: 50 + i*10, y: 50 });
   }
-
   classes[name] = students;
   currentClass = name;
   buildDropdown();
@@ -169,11 +166,11 @@ function renderStudents() {
     numberDiv.style.marginBottom = "5px";
     numberDiv.addEventListener("click", async (e) => {
       e.stopPropagation();
-      const newNum = parseInt(prompt("Enter new student number:", student.number || index+1));
+      const newNum = parseInt(prompt("Enter new student number:", student.number || index + 1));
       if (!isNaN(newNum)) {
         student.number = newNum;
         await db.collection("classes").doc(currentClass).set({ students });
-        renderStudents();
+        renderStudents(); // update immediately
       }
     });
 
@@ -185,7 +182,7 @@ function renderStudents() {
       if (newName && newName.trim() !== "") {
         student.name = newName.trim();
         await db.collection("classes").doc(currentClass).set({ students });
-        renderStudents();
+        renderStudents(); // update immediately
       }
     });
 
@@ -193,6 +190,7 @@ function renderStudents() {
     div.appendChild(nameDiv);
     canvas.appendChild(div);
 
+    // Drag
     let offsetX, offsetY, isDragging = false;
     div.addEventListener("mousedown", e => {
       isDragging = true;
@@ -214,7 +212,7 @@ function renderStudents() {
       }
     });
 
-    // Click to open action modal
+    // Double click opens action modal
     div.addEventListener("dblclick", () => {
       pendingStudent = student;
       reasonModal.style.display = "flex";
