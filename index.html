@@ -82,6 +82,7 @@ const addStudentBtn = document.getElementById("addStudent");
 const canvas = document.getElementById("canvas");
 const exportBtn = document.getElementById("exportLog");
 const reasonModal = document.getElementById("reasonModal");
+const reasonModalContent = document.getElementById("reasonModalContent");
 const modalStudentName = document.getElementById("modalStudentName");
 const colorButtons = document.querySelectorAll(".reasonBtn");
 const renameInput = document.getElementById("renameInput");
@@ -94,9 +95,6 @@ let classes = {};
 let currentClass = "";
 let selectedStudent = null;
 let log = [];
-let draggedStudent = null;
-let offsetX = 0;
-let offsetY = 0;
 
 // Load classes
 async function loadClasses(){
@@ -153,7 +151,6 @@ function renderStudents(){
     div.className=`student ${student.color}`;
     div.style.left=student.x+"px";
     div.style.top=student.y+"px";
-    div.dataset.index=index;
 
     const numberDiv=document.createElement("div");
     numberDiv.textContent=student.number||index+1;
@@ -168,12 +165,27 @@ function renderStudents(){
     canvas.appendChild(div);
 
     // Drag
-    div.addEventListener("mousedown", e=>{
-      draggedStudent = { student, div };
-      offsetX = e.clientX - div.offsetLeft;
-      offsetY = e.clientY - div.offsetTop;
+    let offsetX, offsetY, isDragging=false;
+    div.addEventListener("mousedown", e=>{ 
+      isDragging=true; 
+      offsetX=e.clientX-div.offsetLeft; 
+      offsetY=e.clientY-div.offsetTop; 
       div.style.cursor="grabbing";
-      e.preventDefault();
+    });
+    document.addEventListener("mousemove", e=>{ 
+      if(isDragging){ 
+        student.x=e.clientX-offsetX; 
+        student.y=e.clientY-offsetY; 
+        div.style.left=student.x+"px"; 
+        div.style.top=student.y+"px"; 
+      }
+    });
+    document.addEventListener("mouseup", async ()=>{ 
+      if(isDragging){ 
+        isDragging=false; 
+        div.style.cursor="grab";
+        await db.collection("classes").doc(currentClass).set({students}); 
+      }
     });
 
     // Open modal on click
@@ -187,26 +199,14 @@ function renderStudents(){
   });
 }
 
-document.addEventListener("mousemove", e=>{
-  if(draggedStudent){
-    draggedStudent.student.x = e.clientX - offsetX;
-    draggedStudent.student.y = e.clientY - offsetY;
-    draggedStudent.div.style.left = draggedStudent.student.x + "px";
-    draggedStudent.div.style.top = draggedStudent.student.y + "px";
-  }
-});
-
-document.addEventListener("mouseup", async ()=>{
-  if(draggedStudent){
-    draggedStudent.div.style.cursor="grab";
-    draggedStudent=null;
-    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
-  }
-});
+// Modal: prevent click from bubbling
+reasonModalContent.addEventListener("click", e=>{ e.stopPropagation(); });
+reasonModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
 
 // Modal: color buttons
 colorButtons.forEach(btn=>{
-  btn.addEventListener("click", async ()=>{
+  btn.addEventListener("click", async (e)=>{
+    e.stopPropagation();
     if(!selectedStudent) return;
     const action=btn.getAttribute("data-action");
     selectedStudent.color=action;
@@ -218,20 +218,31 @@ colorButtons.forEach(btn=>{
 });
 
 // Rename
-renameBtn.addEventListener("click", async ()=>{
+renameBtn.addEventListener("click", async (e)=>{
+  e.stopPropagation();
   if(!selectedStudent) return;
   const newName=renameInput.value.trim();
-  if(newName){ selectedStudent.name=newName; await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); renderStudents(); modalStudentName.textContent=newName; }
+  if(newName){ 
+    selectedStudent.name=newName; 
+    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); 
+    renderStudents(); 
+    modalStudentName.textContent=newName; 
+  }
 });
 
 // Change number
-numberBtn.addEventListener("click", async ()=>{
+numberBtn.addEventListener("click", async (e)=>{
+  e.stopPropagation();
   if(!selectedStudent) return;
   const num=parseInt(numberInput.value);
-  if(!isNaN(num)){ selectedStudent.number=num; await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); renderStudents(); }
+  if(!isNaN(num)){ 
+    selectedStudent.number=num; 
+    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); 
+    renderStudents(); 
+  }
 });
 
-closeModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
+closeModal.addEventListener("click", (e)=>{ e.stopPropagation(); reasonModal.style.display="none"; });
 
 // Export CSV
 exportBtn.addEventListener("click", ()=>{
