@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>MusicMojo</title>
   <style>
     body { font-family: sans-serif; margin: 20px; }
@@ -108,17 +108,13 @@
     let pendingStudent = null;
     const log = [];
 
-    // ======= Firestore functions =======
     async function loadData() {
       const snapshot = await db.collection("classes").get();
       snapshot.forEach(doc => { classes[doc.id] = doc.data().students || []; });
-
-      // Ensure 20 default classes
       for (let i = 1; i <= 20; i++) {
         const clsName = "Class " + i;
         if (!classes[clsName]) classes[clsName] = [];
       }
-
       buildDropdown();
       classSelector.value = currentClass;
       if (classes[currentClass].length === 0) initDefaultStudents();
@@ -154,7 +150,7 @@
       renderStudents();
     });
 
-    // ======= Buttons =======
+    // ===== Buttons =====
     renameClassBtn.addEventListener("click", async () => {
       const newName = prompt("Enter new class name:", currentClass);
       if (newName && newName.trim() !== "" && !classes[newName]) {
@@ -192,7 +188,6 @@
       renderStudents();
     });
 
-    // ======= Students rendering =======
     function renderStudents() {
       canvas.innerHTML = "";
       classes[currentClass].forEach((student, index) => {
@@ -200,13 +195,10 @@
         div.className = `student ${student.color}`;
         div.style.left = `${student.x}px`;
         div.style.top = `${student.y}px`;
-
         const numberSpan = document.createElement("div");
         numberSpan.textContent = index+1; numberSpan.style.fontSize="18px"; numberSpan.style.fontWeight="bold"; numberSpan.style.marginBottom="5px";
-
         const nameSpan = document.createElement("div");
         nameSpan.textContent = student.name;
-
         div.appendChild(numberSpan);
         div.appendChild(nameSpan);
 
@@ -232,7 +224,7 @@
       btn.addEventListener("click", async () => {
         if (pendingStudent) {
           const action = btn.getAttribute("data-action");
-          pendingStudent.color = action === "yellow" ? "yellow" : action === "red" ? "red" : "green";
+          pendingStudent.color = action==="yellow"?"yellow":action==="red"?"red":"green";
           log.push({ student: pendingStudent.name, color: pendingStudent.color, reason: btn.textContent, time: new Date().toLocaleString() });
           pendingStudent = null;
           hideModal();
@@ -253,29 +245,25 @@
       document.addEventListener("mouseup", async () => { isDragging=false; el.dragging=false; await saveData(); });
     }
 
-    // ======= Group modal =======
+    // Groups
     makeGroupsBtn.addEventListener("click", () => { groupResults.innerHTML=""; document.getElementById("numGroups").value=""; document.getElementById("studentsPerGroup").value=""; groupModal.style.display="flex"; });
     closeGroupModal.addEventListener("click", () => { groupModal.style.display="none"; });
     createGroupsBtn.addEventListener("click", () => {
-      const numGroups = parseInt(document.getElementById("numGroups").value);
-      const studentsPerGroup = parseInt(document.getElementById("studentsPerGroup").value);
-      const students = [...classes[currentClass]].sort(()=>Math.random()-0.5);
+      const numGroups=parseInt(document.getElementById("numGroups").value);
+      const studentsPerGroup=parseInt(document.getElementById("studentsPerGroup").value);
+      const students=[...classes[currentClass]]; students.sort(()=>Math.random()-0.5);
       let groups=[];
-      if(numGroups>0){ for(let i=0;i<numGroups;i++) groups.push([]); students.forEach((s,i)=>groups[i%numGroups].push(s.name)); }
-      else if(studentsPerGroup>0){ let num=Math.ceil(students.length/studentsPerGroup); for(let i=0;i<num;i++) groups.push([]); students.forEach((s,i)=>groups[i%num].push(s.name)); }
-      else{ alert("Enter number of groups OR students per group."); return; }
-      groupResults.innerHTML=""; groups.forEach((group,idx)=>{ const div=document.createElement("div"); div.innerHTML=`<strong>Group ${idx+1}:</strong><br>${group.join(", ")}`; div.style.marginBottom="10px"; groupResults.appendChild(div); });
+      if(numGroups>0){ for(let i=0;i<numGroups;i++) groups.push([]); students.forEach((s,i)=>{ groups[i%numGroups].push(s.name); }); }
+      else if(studentsPerGroup>0){ let num=Math.ceil(students.length/studentsPerGroup); for(let i=0;i<num;i++) groups.push([]); students.forEach((s,i)=>{ groups[i%num].push(s.name); }); }
+      else { alert("Enter number of groups OR students per group."); return; }
+      groupResults.innerHTML=""; groups.forEach((g,idx)=>{ const div=document.createElement("div"); div.innerHTML=`<strong>Group ${idx+1}:</strong><br>${g.join(", ")}`; groupResults.appendChild(div); });
     });
 
-    // ======= Export log =======
     document.getElementById("exportLog").addEventListener("click", () => {
-      let csv="Student,Color,Reason,Time\n";
-      log.forEach(e=>{ csv+=`${e.student},${e.color},${e.reason||""},${e.time}\n`; });
-      const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob);
-      const a=document.createElement("a"); a.href=url; a.download="class_log.csv"; a.click(); URL.revokeObjectURL(url);
+      let csv="Student,Color,Reason,Time\n"; log.forEach(entry=>{ csv+=`${entry.student},${entry.color},${entry.reason||""},${entry.time}\n`; });
+      const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="class_log.csv"; a.click(); URL.revokeObjectURL(url);
     });
 
-    // ======= Initialize =======
     loadData();
   </script>
 </body>
