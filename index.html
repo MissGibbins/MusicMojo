@@ -95,11 +95,6 @@ let currentClass = "";
 let selectedStudent = null;
 let log = [];
 
-// Drag variables
-let draggedStudent = null;
-let offsetX = 0, offsetY = 0;
-let isDragging = false;
-
 // Load classes
 async function loadClasses(){
   const snapshot = await db.collection("classes").get();
@@ -179,13 +174,19 @@ function renderStudents(){
   });
 }
 
-// Drag logic
+// Dragging logic
+let draggedStudent = null;
+let draggedDiv = null;
+let offsetX = 0, offsetY = 0;
+let isDragging = false;
+
 canvas.addEventListener("mousedown", e => {
   const target = e.target.closest(".student");
   if (!target) return;
   const name = target.querySelector("div:nth-child(2)").textContent;
   draggedStudent = classes[currentClass].find(s => s.name === name);
   if (!draggedStudent) return;
+  draggedDiv = target;
   isDragging = true;
   offsetX = e.clientX - target.offsetLeft;
   offsetY = e.clientY - target.offsetTop;
@@ -193,10 +194,11 @@ canvas.addEventListener("mousedown", e => {
 });
 
 document.addEventListener("mousemove", e => {
-  if (!isDragging || !draggedStudent) return;
+  if (!isDragging || !draggedStudent || !draggedDiv) return;
   draggedStudent.x = e.clientX - offsetX;
   draggedStudent.y = e.clientY - offsetY;
-  renderStudents();
+  draggedDiv.style.left = draggedStudent.x + "px";
+  draggedDiv.style.top = draggedStudent.y + "px";
 });
 
 document.addEventListener("mouseup", async () => {
@@ -205,6 +207,7 @@ document.addEventListener("mouseup", async () => {
   if (draggedStudent) {
     await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
     draggedStudent = null;
+    draggedDiv = null;
   }
   document.querySelectorAll(".student").forEach(div => div.style.cursor = "grab");
 });
