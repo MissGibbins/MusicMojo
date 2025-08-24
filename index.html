@@ -1,561 +1,274 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>MusicMojo</title>
+  <meta charset="UTF-8">
+  <title>Class Manager</title>
   <style>
     body {
-      font-family: sans-serif;
-      margin: 20px;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    header img {
-      height: 100px;
-      margin-right: 20px;
-    }
-
-    header h1 {
-      font-size: 32px;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
       margin: 0;
+      padding: 0;
     }
-
-    #classSelector {
-      margin-bottom: 20px;
+    header {
+      background: #22C55F;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
     }
-
-    #canvas {
+    #controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px;
+    }
+    button, select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button {
+      background: #22C55F;
+      color: white;
+    }
+    button:hover {
+      background: #16A34A;
+    }
+    #studentCanvas {
       position: relative;
       width: 100%;
-      height: 600px;
+      height: calc(100vh - 150px);
       border: 2px dashed #ccc;
+      background: white;
+      overflow: hidden;
     }
-
     .student {
-      width: 100px;
-      height: 80px;
-      background-color: #22C55F;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: grab;
-      user-select: none;
       position: absolute;
-      flex-direction: column;
+      background: #22C55F;
+      color: white;
+      padding: 8px;
       border-radius: 8px;
-      font-size: 18px;
+      cursor: move;
+      width: 120px;
       text-align: center;
-      padding: 10px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+      user-select: none;
     }
-
-    .yellow {
-      background-color: #facc15;
-      color: #000;
+    .studentNumber {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 4px;
     }
-
-    .red {
-      background-color: #ef4444;
-      color: #fff;
+    .studentName {
+      font-size: 16px;
+      font-weight: bold;
     }
-
-    button {
-      margin-top: 20px;
-    }
-
     /* Modal */
-    #reasonModal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
+    .modal {
       display: none;
-      justify-content: center;
-      align-items: center;
+      position: fixed;
+      z-index: 10;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
     }
-
-    #reasonModalContent {
-      background: #fff;
+    .modal-content {
+      background: white;
+      margin: 10% auto;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      width: 300px;
       text-align: center;
     }
-
-    .reasonBtn {
+    .modal button {
       display: block;
-      margin: 10px auto;
-      width: 200px;
+      width: 100%;
+      margin: 6px 0;
       padding: 10px;
-      border: none;
-      color: #fff;
       border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
-    .yellowBtn {
-      background: #facc15;
-      color: #000;
-    }
-
-    .yellowBtn:hover {
-      background: #eab308;
-    }
-
-    .redBtn {
-      background: #ef4444;
-    }
-
-    .redBtn:hover {
-      background: #dc2626;
-    }
-
-    .greenBtn {
-      background: #22C55F;
-    }
-
-    .greenBtn:hover {
-      background: #16a34a;
-    }
-
-    #addStudent, #renameClass {
-      margin-left: 10px;
-    }
-
-    #groupModal {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #groupModalContent {
-      background: #fff;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      text-align: center;
-      width: 320px;
-      max-width: 90%;
-    }
-
-    #groupModalContent h3 {
-      margin-top: 0;
-      font-size: 22px;
-    }
-
-    #groupModalContent label {
-      display: block;
-      margin: 15px 0;
+      font-size: 14px;
       font-weight: bold;
     }
-
-    #groupModalContent input {
-      margin-left: 10px;
-      width: 60px;
-      padding: 4px;
-      font-size: 16px;
-    }
-
-    #groupModalContent .or {
-      margin: 10px 0;
-      font-weight: bold;
-    }
-
-    #groupModalContent .buttons {
-      margin-top: 20px;
-    }
-
-    #groupModalContent button {
-      margin: 0 5px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
-    #groupModalContent button.greenBtn {
-      background: #22C55F;
-      color: white;
-    }
-
-    #groupModalContent button.greenBtn:hover {
-      background: #16a34a;
-    }
-
-    #groupModalContent #groupResults {
-      text-align: left;
-      margin-top: 20px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    #groupModalContent #groupResults div {
-      background: #f9f9f9;
-      padding: 8px 10px;
-      border-radius: 6px;
-      margin-bottom: 6px;
-      font-size: 14px;
-    }
-
-    .actionBtn {
-      background-color: #22C55F; /* green for brand */
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      margin-left: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.2s ease;
-    }
-
-    .actionBtn:hover {
-      background-color: #16a34a;
-    }
-
+    .btn-green { background: #22C55F; color: white; }
+    .btn-yellow { background: #EAB308; color: black; }
+    .btn-red { background: #DC2626; color: white; }
   </style>
 </head>
 <body>
   <header>
-    <img src="MusicMojo logo.png" alt="MusicMojo Logo" />
-    <h1>MusicMojo</h1>
+    Class Manager
   </header>
 
-  <label for="classSelector">Select Class:</label>
-  <select id="classSelector"></select>
-  <button id="renameClass" class="actionBtn">✏️ Rename Class</button>
-  <button id="addStudent" class="actionBtn">+ Add Student</button>
-  <button id="makeGroups" class="actionBtn">🎲 Make Random Groups</button>
+  <div id="controls">
+    <select id="classSelect"></select>
+    <button onclick="renameClass()">Rename Class</button>
+    <button onclick="addStudent()">+ Student</button>
+    <button onclick="makeRandomGroups()">Make Random Groups</button>
+  </div>
 
-  <div id="canvas"></div>
-
-  <button id="exportLog">Export Log (CSV)</button>
+  <div id="studentCanvas"></div>
 
   <!-- Modal -->
-  <div id="reasonModal">
-    <div id="reasonModalContent">
-      <h3>Select Action</h3>
-      <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
-      <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
-      <button class="reasonBtn redBtn" data-action="red">Reflection, Contact Home</button>
+  <div id="statusModal" class="modal">
+    <div class="modal-content">
+      <h3>Change Status</h3>
+      <button class="btn-green" onclick="setStatus('green')">Back to Green</button>
+      <button class="btn-yellow" onclick="setStatus('yellow1')">Reason 1</button>
+      <button class="btn-yellow" onclick="setStatus('yellow2')">Reason 2</button>
+      <button class="btn-yellow" onclick="setStatus('yellow3')">Reason 3</button>
+      <button class="btn-yellow" onclick="setStatus('yellow4')">Reason 4</button>
+      <button class="btn-red" onclick="setStatus('red')">Red</button>
     </div>
   </div>
-
- <!-- Group Maker Modal -->
-  <div id="groupModal">
-    <div id="groupModalContent">
-      <h3>Create Random Groups</h3>
-      <label>How many groups?
-        <input type="number" id="numGroups" min="1" />
-      </label>
-      <div class="or">OR</div>
-      <label>Students per group
-        <input type="number" id="studentsPerGroup" min="1" />
-      </label>
-      <div class="buttons">
-        <button id="createGroups" class="greenBtn">Create</button>
-        <button id="closeGroupModal">Cancel</button>
-      </div>
-      <div id="groupResults"></div>
-    </div>
-  </div>
-
-
 
   <script>
-    const canvas = document.getElementById("canvas");
-    const classSelector = document.getElementById("classSelector");
-    const renameClassBtn = document.getElementById("renameClass");
-    const addStudentBtn = document.getElementById("addStudent");
-    const reasonModal = document.getElementById("reasonModal");
-    const reasonButtons = document.querySelectorAll(".reasonBtn");
-    const log = [];
-
-    let currentClass = "Class 1";
-    let pendingStudent = null;
-
+    const apiUrl = "https://script.google.com/macros/s/AKfycbwCGcuFUhojhE7tLOXW0ANd_GzYYvJjShDQVyCJx_1nBzpW4tD5148CBySYPauop2le/exec";
     let classes = {};
-    const savedData = localStorage.getItem("classroomData");
-    if (savedData) {
-      classes = JSON.parse(savedData);
-    }
+    let currentClass = "Class 1";
+    let dragged = null;
+    let currentStudent = null;
 
-    for (let i = 1; i <= 20; i++) {
-      const clsName = "Class " + i;
-      if (!classes[clsName]) {
-        classes[clsName] = [];
-      }
-    }
-
-    buildDropdown();
-
-    classSelector.value = currentClass;
-
-    classSelector.addEventListener("change", () => {
-      saveData();
-      currentClass = classSelector.value;
-      if (classes[currentClass].length === 0) {
-        for (let i = 1; i <= 14; i++) {
-          classes[currentClass].push({
-            name: "Student " + i,
-            color: "green",
-            x: 20 + i * 110,
-            y: 20
-          });
-        }
-      }
+    async function loadData() {
+      const res = await fetch(apiUrl);
+      const data = await res.json();
+      classes = data.classes || { "Class 1": [] };
+      currentClass = Object.keys(classes)[0];
+      renderClassOptions();
       renderStudents();
-    });
-
-const makeGroupsBtn = document.getElementById("makeGroups");
-const groupModal = document.getElementById("groupModal");
-const closeGroupModal = document.getElementById("closeGroupModal");
-const createGroupsBtn = document.getElementById("createGroups");
-const groupResults = document.getElementById("groupResults");
-
-makeGroupsBtn.addEventListener("click", () => {
-  groupResults.innerHTML = "";
-  document.getElementById("numGroups").value = "";
-  document.getElementById("studentsPerGroup").value = "";
-  groupModal.style.display = "flex";
-});
-
-closeGroupModal.addEventListener("click", () => {
-  groupModal.style.display = "none";
-});
-
-createGroupsBtn.addEventListener("click", () => {
-  const numGroups = parseInt(document.getElementById("numGroups").value);
-  const studentsPerGroup = parseInt(document.getElementById("studentsPerGroup").value);
-
-  const students = [...classes[currentClass]];
-  students.sort(() => Math.random() - 0.5); // shuffle
-
-  let groups = [];
-
-  if (numGroups && numGroups > 0) {
-    for (let i = 0; i < numGroups; i++) {
-      groups.push([]);
-    }
-    students.forEach((s, i) => {
-      groups[i % numGroups].push(s.name);
-    });
-  } else if (studentsPerGroup && studentsPerGroup > 0) {
-    let num = Math.ceil(students.length / studentsPerGroup);
-    for (let i = 0; i < num; i++) {
-      groups.push([]);
-    }
-    students.forEach((s, i) => {
-      groups[i % num].push(s.name);
-    });
-  } else {
-    alert("Please enter number of groups OR students per group.");
-    return;
-  }
-
-  // Display results
-  groupResults.innerHTML = "";
-  groups.forEach((group, idx) => {
-    const div = document.createElement("div");
-    div.innerHTML = `<strong>Group ${idx + 1}:</strong><br>${group.join(", ")}`;
-    div.style.marginBottom = "10px";
-    groupResults.appendChild(div);
-  });
-});
-
-    
-    renameClassBtn.addEventListener("click", () => {
-      const newName = prompt("Enter a new name for this class:", currentClass);
-      if (newName && newName.trim() !== "" && !classes[newName]) {
-        classes[newName] = classes[currentClass];
-        delete classes[currentClass];
-        currentClass = newName;
-        buildDropdown();
-        classSelector.value = currentClass;
-        saveData();
-      } else {
-        alert("Invalid name or name already exists.");
-      }
-    });
-
-    if (classes[currentClass].length === 0) {
-      for (let i = 1; i <= 14; i++) {
-        classes[currentClass].push({
-          name: "Student " + i,
-          color: "green",
-          x: 20 + i * 110,
-          y: 20
-        });
-      }
     }
 
-    addStudentBtn.addEventListener("click", () => {
-      classes[currentClass].push({
-        name: "New Student",
-        color: "green",
-        x: 50,
-        y: 50
+    async function saveData() {
+      await fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify({ classes }),
+        headers: { "Content-Type": "application/json" }
       });
-      saveData();
-      renderStudents();
-    });
+    }
 
-    function buildDropdown() {
-      classSelector.innerHTML = "";
-      Object.keys(classes).forEach(cls => {
-        const option = document.createElement("option");
-        option.value = cls;
-        option.textContent = cls;
-        classSelector.appendChild(option);
+    function renderClassOptions() {
+      const select = document.getElementById("classSelect");
+      select.innerHTML = "";
+      Object.keys(classes).forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        if (c === currentClass) opt.selected = true;
+        select.appendChild(opt);
       });
+      select.onchange = e => {
+        currentClass = e.target.value;
+        renderStudents();
+      };
     }
 
     function renderStudents() {
+      const canvas = document.getElementById("studentCanvas");
       canvas.innerHTML = "";
-      classes[currentClass].forEach((student, index) => {
+      classes[currentClass].forEach((student, i) => {
         const div = document.createElement("div");
-        div.className = `student ${student.color}`;
-        div.style.left = `${student.x}px`;
-        div.style.top = `${student.y}px`;
-
-        const numberSpan = document.createElement("div");
-        numberSpan.textContent = index + 1;
-        numberSpan.style.fontSize = "18px";
-        numberSpan.style.fontWeight = "bold";
-        numberSpan.style.marginBottom = "5px";
-
-        const nameSpan = document.createElement("div");
-        nameSpan.textContent = student.name;
-
-        div.appendChild(numberSpan);
-        div.appendChild(nameSpan);
-
-        div.addEventListener("dblclick", () => {
-          const newName = prompt("Enter new student name:", student.name);
-          if (newName && newName.trim() !== "") {
-            student.name = newName.trim();
-            saveData();
-            renderStudents();
-          }
-        });
-
-        div.addEventListener("click", (e) => {
-          if (e.detail === 1) {
-            setTimeout(() => {
-              if (!div.dragging) {
-                pendingStudent = student;
-                showModal();
-              }
-            }, 200);
-          }
-        });
-
+        div.className = "student";
+        div.style.left = student.x + "px";
+        div.style.top = student.y + "px";
+        div.style.background = getColor(student.status);
+        div.dataset.index = i;
+        div.innerHTML = `
+          <div class="studentNumber">${i+1}</div>
+          <div class="studentName">${student.name}</div>
+        `;
+        div.onclick = () => { currentStudent = student; openModal(); };
         makeDraggable(div, student);
-
         canvas.appendChild(div);
       });
     }
 
-    reasonButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (pendingStudent) {
-          const action = btn.getAttribute("data-action");
-          if (action === "yellow") {
-            pendingStudent.color = "yellow";
-          } else if (action === "red") {
-            pendingStudent.color = "red";
-          } else {
-            pendingStudent.color = "green";
-          }
-
-          log.push({
-            student: pendingStudent.name,
-            color: pendingStudent.color,
-            reason: btn.textContent,
-            time: new Date().toLocaleString()
-          });
-
-          pendingStudent = null;
-          hideModal();
-          saveData();
-          renderStudents();
-        }
-      });
-    });
-
-    reasonModal.addEventListener("click", (e) => {
-      if (e.target === reasonModal) {
-        hideModal();
-      }
-    });
-
-    function showModal() {
-      reasonModal.style.display = "flex";
-    }
-
-    function hideModal() {
-      reasonModal.style.display = "none";
-    }
-
     function makeDraggable(el, student) {
       let offsetX, offsetY;
-      let isDragging = false;
-
-      el.addEventListener("mousedown", e => {
-        isDragging = true;
-        el.dragging = true;
-        offsetX = e.clientX - el.offsetLeft;
-        offsetY = e.clientY - el.offsetTop;
-      });
-
-      document.addEventListener("mousemove", e => {
-        if (isDragging) {
-          student.x = e.clientX - offsetX;
-          student.y = e.clientY - offsetY;
-          el.style.left = student.x + "px";
-          el.style.top = student.y + "px";
-          saveData();
+      el.onmousedown = e => {
+        dragged = el;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+      };
+      document.onmousemove = e => {
+        if (dragged) {
+          dragged.style.left = (e.pageX - offsetX) + "px";
+          dragged.style.top = (e.pageY - offsetY) + "px";
         }
-      });
-
-      document.addEventListener("mouseup", () => {
-        isDragging = false;
-        el.dragging = false;
-      });
+      };
+      document.onmouseup = () => {
+        if (dragged) {
+          const i = dragged.dataset.index;
+          student.x = parseInt(dragged.style.left);
+          student.y = parseInt(dragged.style.top);
+          saveData();
+          dragged = null;
+        }
+      };
     }
 
-    document.getElementById("exportLog").addEventListener("click", () => {
-      let csv = "Student,Color,Reason,Time\n";
-      log.forEach(entry => {
-        csv += `${entry.student},${entry.color},${entry.reason || ""},${entry.time}\n`;
-      });
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "class_log.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    function saveData() {
-      localStorage.setItem("classroomData", JSON.stringify(classes));
+    function addStudent() {
+      const name = prompt("Student name?");
+      if (!name) return;
+      classes[currentClass].push({ name, x: 50, y: 50, status: "green" });
+      renderStudents();
+      saveData();
     }
 
-    renderStudents();
+    function renameClass() {
+      const newName = prompt("New class name?", currentClass);
+      if (!newName) return;
+      classes[newName] = classes[currentClass];
+      delete classes[currentClass];
+      currentClass = newName;
+      renderClassOptions();
+      saveData();
+    }
+
+    function getColor(status) {
+      if (status === "green") return "#22C55F";
+      if (status.startsWith("yellow")) return "#EAB308";
+      if (status === "red") return "#DC2626";
+      return "#22C55F";
+    }
+
+    function openModal() {
+      document.getElementById("statusModal").style.display = "block";
+    }
+    function closeModal() {
+      document.getElementById("statusModal").style.display = "none";
+    }
+    function setStatus(status) {
+      currentStudent.status = status;
+      renderStudents();
+      saveData();
+      closeModal();
+    }
+
+    function makeRandomGroups() {
+      const method = prompt("Type 'groups' to set number of groups, or 'size' for students per group:");
+      if (!method) return;
+      let groups = [];
+      let students = [...classes[currentClass]];
+      students = students.sort(() => Math.random() - 0.5);
+      if (method === "groups") {
+        const num = parseInt(prompt("How many groups?"));
+        for (let i=0; i<num; i++) groups.push([]);
+        students.forEach((s, i) => groups[i%num].push(s.name));
+      } else {
+        const size = parseInt(prompt("How many students per group?"));
+        for (let i=0; i<Math.ceil(students.length/size); i++) {
+          groups.push(students.slice(i*size, i*size+size).map(s=>s.name));
+        }
+      }
+      alert(groups.map((g,i)=>`Group ${i+1}: ${g.join(", ")}`).join("\n"));
+    }
+
+    loadData();
   </script>
 </body>
 </html>
