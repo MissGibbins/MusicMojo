@@ -126,7 +126,7 @@ renameClassBtn.addEventListener("click", async () => {
   buildDropdown();
 });
 
-// Updated + New Class button with student number prompt
+// + New Class button with student number prompt
 newClassBtn.addEventListener("click", async () => {
   const name = prompt("Enter name for new class:");
   if (!name || classes[name]) return alert("Invalid or duplicate class name!");
@@ -136,7 +136,7 @@ newClassBtn.addEventListener("click", async () => {
 
   const students = [];
   for (let i = 1; i <= num; i++) {
-    students.push({ name: "Student " + i, color: "green", x: 50 + i*10, y: 50 });
+    students.push({ name: "Student " + i, number: i, color: "green", x: 50 + i*10, y: 50 });
   }
 
   classes[name] = students;
@@ -148,7 +148,7 @@ newClassBtn.addEventListener("click", async () => {
 
 addStudentBtn.addEventListener("click", async () => {
   const students = classes[currentClass];
-  const newStudent = { name: "New Student", color: "green", x: 50, y: 50 };
+  const newStudent = { name: "New Student", number: students.length + 1, color: "green", x: 50, y: 50 };
   students.push(newStudent);
   await db.collection("classes").doc(currentClass).set({ students });
   renderStudents();
@@ -162,7 +162,35 @@ function renderStudents() {
     div.className = `student ${student.color}`;
     div.style.left = student.x + "px";
     div.style.top = student.y + "px";
-    div.innerHTML = `<div style="font-weight:bold">${index+1}</div><div>${student.name}</div>`;
+
+    const numberDiv = document.createElement("div");
+    numberDiv.textContent = student.number || index + 1;
+    numberDiv.style.fontWeight = "bold";
+    numberDiv.style.marginBottom = "5px";
+    numberDiv.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const newNum = parseInt(prompt("Enter new student number:", student.number || index+1));
+      if (!isNaN(newNum)) {
+        student.number = newNum;
+        await db.collection("classes").doc(currentClass).set({ students });
+        renderStudents();
+      }
+    });
+
+    const nameDiv = document.createElement("div");
+    nameDiv.textContent = student.name;
+    nameDiv.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const newName = prompt("Enter new student name:", student.name);
+      if (newName && newName.trim() !== "") {
+        student.name = newName.trim();
+        await db.collection("classes").doc(currentClass).set({ students });
+        renderStudents();
+      }
+    });
+
+    div.appendChild(numberDiv);
+    div.appendChild(nameDiv);
     canvas.appendChild(div);
 
     let offsetX, offsetY, isDragging = false;
@@ -186,7 +214,8 @@ function renderStudents() {
       }
     });
 
-    div.addEventListener("click", () => {
+    // Click to open action modal
+    div.addEventListener("dblclick", () => {
       pendingStudent = student;
       reasonModal.style.display = "flex";
     });
