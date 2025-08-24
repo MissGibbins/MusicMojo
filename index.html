@@ -1,57 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>MusicMojo - Firebase Test</title>
-<style>
-  body { font-family: sans-serif; margin: 20px; }
-  button { padding: 8px 14px; margin: 5px; cursor: pointer; }
-  #classSelector { margin-right: 10px; }
-</style>
+  <meta charset="UTF-8">
+  <title>MusicMojo</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    header { display: flex; align-items: center; margin-bottom: 10px; }
+    header img { height: 100px; margin-right: 20px; }
+    header h1 { font-size: 32px; margin: 0; }
+    #classSelector { margin-bottom: 20px; }
+    #canvas { position: relative; width: 100%; height: 600px; border: 2px dashed #ccc; }
+    .student { width: 100px; height: 80px; background-color: #22C55F; color: white; display: flex; justify-content: center; align-items: center; cursor: grab; user-select: none; position: absolute; flex-direction: column; border-radius: 8px; font-size: 18px; text-align: center; padding: 10px; }
+    .yellow { background-color: #facc15; color: #000; }
+    .red { background-color: #ef4444; color: #fff; }
+    button { margin-top: 20px; }
+    /* Modal styles */
+    #reasonModal, #groupModal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; }
+    #reasonModalContent, #groupModalContent { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align:center; }
+    .reasonBtn { display: block; margin: 10px auto; width: 200px; padding: 10px; border: none; color: #fff; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    .yellowBtn { background: #facc15; color:#000; }
+    .redBtn { background: #ef4444; }
+    .greenBtn { background: #22C55F; }
+    .reasonBtn:hover { opacity:0.85; }
+    .actionBtn { background-color: #22C55F; color: white; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s ease; }
+    .actionBtn:hover { background-color: #16a34a; }
+  </style>
 </head>
 <body>
-  <h1>MusicMojo</h1>
+  <header>
+    <img src="MusicMojo logo.png" alt="MusicMojo Logo" />
+    <h1>MusicMojo</h1>
+  </header>
 
   <label for="classSelector">Select Class:</label>
   <select id="classSelector"></select>
-  <button id="newClass">+ New Class</button>
+  <button id="renameClass" class="actionBtn">✏️ Rename Class</button>
+  <button id="newClass" class="actionBtn">+ New Class</button>
+  <button id="addStudent" class="actionBtn">+ Add Student</button>
+  <button id="makeGroups" class="actionBtn">🎲 Make Random Groups</button>
 
-  <ul id="studentList"></ul>
+  <div id="canvas"></div>
+  <button id="exportLog">Export Log (CSV)</button>
 
-  <!-- Firebase SDK -->
+  <!-- Reason Modal -->
+  <div id="reasonModal">
+    <div id="reasonModalContent">
+      <h3>Select Action</h3>
+      <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
+      <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
+      <button class="reasonBtn redBtn" data-action="red">Reflection, Contact Home</button>
+    </div>
+  </div>
+
+  <!-- Group Modal -->
+  <div id="groupModal">
+    <div id="groupModalContent">
+      <h3>Create Random Groups</h3>
+      <label>How many groups?
+        <input type="number" id="numGroups" min="1" />
+      </label>
+      <div class="or">OR</div>
+      <label>Students per group
+        <input type="number" id="studentsPerGroup" min="1" />
+      </label>
+      <div class="buttons">
+        <button id="createGroups" class="greenBtn">Create</button>
+        <button id="closeGroupModal">Cancel</button>
+      </div>
+      <div id="groupResults"></div>
+    </div>
+  </div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
 
   <script>
-    // ----- Replace these with your Firebase project config -----
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+       apiKey: "AIzaSyDsV5k4-TzsLFVAFv5aNVi2bcEFh4A7uIE",
+      authDomain: "musicmojo-5113d.firebaseapp.com",
+      projectId: "musicmojo-5113d",
+      storageBucket: "musicmojo-5113d.firebasestorage.app",
+      messagingSenderId: "442468017699",
+      appId: "1:442468017699:web:7c670de3485fe5961e3396",
+      measurementId: "G-GXV000M8NL"
     };
-
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    const canvas = document.getElementById("canvas");
     const classSelector = document.getElementById("classSelector");
+    const renameClassBtn = document.getElementById("renameClass");
     const newClassBtn = document.getElementById("newClass");
-    const studentList = document.getElementById("studentList");
+    const addStudentBtn = document.getElementById("addStudent");
+    const reasonModal = document.getElementById("reasonModal");
+    const reasonButtons = document.querySelectorAll(".reasonBtn");
+    const makeGroupsBtn = document.getElementById("makeGroups");
+    const groupModal = document.getElementById("groupModal");
+    const closeGroupModal = document.getElementById("closeGroupModal");
+    const createGroupsBtn = document.getElementById("createGroups");
+    const groupResults = document.getElementById("groupResults");
 
     let classes = {};
-    let currentClass = "";
+    let currentClass = "Class 1";
+    let pendingStudent = null;
+    const log = [];
 
-    // ----- Load classes from Firestore -----
-    async function loadClasses() {
+    async function loadData() {
       const snapshot = await db.collection("classes").get();
-      classes = {};
-      snapshot.forEach(doc => classes[doc.id] = doc.data().students || []);
+      snapshot.forEach(doc => { classes[doc.id] = doc.data().students || []; });
+      for (let i = 1; i <= 20; i++) {
+        const clsName = "Class " + i;
+        if (!classes[clsName]) classes[clsName] = [];
+      }
       buildDropdown();
+      classSelector.value = currentClass;
+      if (classes[currentClass].length === 0) initDefaultStudents();
+      renderStudents();
     }
 
-    // ----- Build class dropdown -----
+    async function saveData() {
+      for (const clsName in classes) {
+        await db.collection("classes").doc(clsName).set({ students: classes[clsName] });
+      }
+    }
+
+    function initDefaultStudents(num=14) {
+      for (let i = 1; i <= num; i++) {
+        classes[currentClass].push({ name: "Student " + i, color: "green", x: 20 + i*110, y:20 });
+      }
+      saveData();
+    }
+
     function buildDropdown() {
       classSelector.innerHTML = "";
       Object.keys(classes).forEach(cls => {
@@ -60,49 +143,129 @@
         option.textContent = cls;
         classSelector.appendChild(option);
       });
-
-      if (Object.keys(classes).length > 0) {
-        currentClass = classSelector.value = Object.keys(classes)[0];
-        renderStudents();
-      }
     }
 
-    // ----- Render students list -----
-    function renderStudents() {
-      studentList.innerHTML = "";
-      const students = classes[currentClass] || [];
-      students.forEach(s => {
-        const li = document.createElement("li");
-        li.textContent = s.name;
-        studentList.appendChild(li);
-      });
-    }
-
-    // ----- Dropdown change -----
     classSelector.addEventListener("change", () => {
       currentClass = classSelector.value;
+      if (classes[currentClass].length === 0) initDefaultStudents();
       renderStudents();
     });
 
-    // ----- New Class button -----
-    newClassBtn.addEventListener("click", async () => {
-      const name = prompt("Enter new class name:");
-      if (!name || classes[name]) {
-        alert("Invalid name or class already exists!");
-        return;
-      }
-
-      // Add new class to Firestore
-      await db.collection("classes").doc(name).set({ students: [] });
-
-      // Update local object and dropdown
-      classes[name] = [];
-      currentClass = name;
-      buildDropdown();
-      alert(`Class "${name}" created!`);
+    // ===== Buttons =====
+    renameClassBtn.addEventListener("click", async () => {
+      const newName = prompt("Enter new class name:", currentClass);
+      if (newName && newName.trim() !== "" && !classes[newName]) {
+        classes[newName] = classes[currentClass];
+        delete classes[currentClass];
+        currentClass = newName;
+        buildDropdown();
+        classSelector.value = currentClass;
+        await saveData();
+      } else alert("Invalid name or name already exists.");
     });
 
-    loadClasses();
+    newClassBtn.addEventListener("click", async () => {
+      const newName = prompt("Enter name for new class:");
+      if (!newName || newName.trim() === "" || classes[newName]) {
+        alert("Invalid name or class already exists.");
+        return;
+      }
+      let numStudents = prompt("How many students to start with? (Enter a number)", "0");
+      numStudents = parseInt(numStudents);
+      if (isNaN(numStudents) || numStudents < 0) numStudents = 0;
+
+      classes[newName] = [];
+      currentClass = newName;
+      buildDropdown();
+      classSelector.value = currentClass;
+      if (numStudents > 0) initDefaultStudents(numStudents);
+      await saveData();
+      renderStudents();
+    });
+
+    addStudentBtn.addEventListener("click", () => {
+      classes[currentClass].push({ name: "New Student", color:"green", x:50, y:50 });
+      saveData();
+      renderStudents();
+    });
+
+    function renderStudents() {
+      canvas.innerHTML = "";
+      classes[currentClass].forEach((student, index) => {
+        const div = document.createElement("div");
+        div.className = `student ${student.color}`;
+        div.style.left = `${student.x}px`;
+        div.style.top = `${student.y}px`;
+        const numberSpan = document.createElement("div");
+        numberSpan.textContent = index+1; numberSpan.style.fontSize="18px"; numberSpan.style.fontWeight="bold"; numberSpan.style.marginBottom="5px";
+        const nameSpan = document.createElement("div");
+        nameSpan.textContent = student.name;
+        div.appendChild(numberSpan);
+        div.appendChild(nameSpan);
+
+        div.addEventListener("dblclick", async () => {
+          const newName = prompt("Enter new student name:", student.name);
+          if (newName && newName.trim() !== "") {
+            student.name = newName.trim();
+            await saveData();
+            renderStudents();
+          }
+        });
+
+        div.addEventListener("click", (e) => {
+          if (e.detail === 1) setTimeout(() => { if (!div.dragging) { pendingStudent = student; showModal(); } }, 200);
+        });
+
+        makeDraggable(div, student);
+        canvas.appendChild(div);
+      });
+    }
+
+    reasonButtons.forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (pendingStudent) {
+          const action = btn.getAttribute("data-action");
+          pendingStudent.color = action==="yellow"?"yellow":action==="red"?"red":"green";
+          log.push({ student: pendingStudent.name, color: pendingStudent.color, reason: btn.textContent, time: new Date().toLocaleString() });
+          pendingStudent = null;
+          hideModal();
+          await saveData();
+          renderStudents();
+        }
+      });
+    });
+
+    reasonModal.addEventListener("click", e => { if(e.target===reasonModal) hideModal(); });
+    function showModal(){ reasonModal.style.display="flex"; }
+    function hideModal(){ reasonModal.style.display="none"; }
+
+    function makeDraggable(el, student) {
+      let offsetX, offsetY, isDragging=false;
+      el.addEventListener("mousedown", e => { isDragging=true; el.dragging=true; offsetX=e.clientX-el.offsetLeft; offsetY=e.clientY-el.offsetTop; });
+      document.addEventListener("mousemove", e => { if(isDragging){ student.x=e.clientX-offsetX; student.y=e.clientY-offsetY; el.style.left=student.x+"px"; el.style.top=student.y+"px"; } });
+      document.addEventListener("mouseup", async () => { isDragging=false; el.dragging=false; await saveData(); });
+    }
+
+    // Groups
+    makeGroupsBtn.addEventListener("click", () => { groupResults.innerHTML=""; document.getElementById("numGroups").value=""; document.getElementById("studentsPerGroup").value=""; groupModal.style.display="flex"; });
+    closeGroupModal.addEventListener("click", () => { groupModal.style.display="none"; });
+    createGroupsBtn.addEventListener("click", () => {
+      const numGroups=parseInt(document.getElementById("numGroups").value);
+      const studentsPerGroup=parseInt(document.getElementById("studentsPerGroup").value);
+      const students=[...classes[currentClass]]; students.sort(()=>Math.random()-0.5);
+      let groups=[];
+      if(numGroups>0){ for(let i=0;i<numGroups;i++) groups.push([]); students.forEach((s,i)=>{ groups[i%numGroups].push(s.name); }); }
+      else if(studentsPerGroup>0){ let num=Math.ceil(students.length/studentsPerGroup); for(let i=0;i<num;i++) groups.push([]); students.forEach((s,i)=>{ groups[i%num].push(s.name); }); }
+      else { alert("Enter number of groups OR students per group."); return; }
+      groupResults.innerHTML=""; groups.forEach((g,idx)=>{ const div=document.createElement("div"); div.innerHTML=`<strong>Group ${idx+1}:</strong><br>${g.join(", ")}`; groupResults.appendChild(div); });
+    });
+
+    document.getElementById("exportLog").addEventListener("click", () => {
+      let csv="Student,Color,Reason,Time\n"; log.forEach(entry=>{ csv+=`${entry.student},${entry.color},${entry.reason||""},${entry.time}\n`; });
+      const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="class_log.csv"; a.click(); URL.revokeObjectURL(url);
+    });
+
+    loadData();
   </script>
 </body>
 </html>
