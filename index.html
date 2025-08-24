@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>MusicMojo</title>
   <style>
-    /* ======= CSS (unchanged) ======= */
     body { font-family: sans-serif; margin: 20px; }
     header { display: flex; align-items: center; margin-bottom: 10px; }
     header img { height: 100px; margin-right: 20px; }
@@ -15,7 +14,7 @@
     .yellow { background-color: #facc15; color: #000; }
     .red { background-color: #ef4444; color: #fff; }
     button { margin-top: 20px; }
-    /* Modal styles kept as-is */
+    /* Modal styles */
     #reasonModal, #groupModal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; }
     #reasonModalContent, #groupModalContent { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); text-align:center; }
     .reasonBtn { display: block; margin: 10px auto; width: 200px; padding: 10px; border: none; color: #fff; border-radius: 6px; cursor: pointer; font-size: 16px; }
@@ -36,6 +35,7 @@
   <label for="classSelector">Select Class:</label>
   <select id="classSelector"></select>
   <button id="renameClass" class="actionBtn">✏️ Rename Class</button>
+  <button id="newClass" class="actionBtn">+ New Class</button>
   <button id="addStudent" class="actionBtn">+ Add Student</button>
   <button id="makeGroups" class="actionBtn">🎲 Make Random Groups</button>
 
@@ -79,7 +79,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js"></script>
 
   <script>
-    // ======= Firebase config =======
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -91,10 +90,10 @@
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ======= App state =======
     const canvas = document.getElementById("canvas");
     const classSelector = document.getElementById("classSelector");
     const renameClassBtn = document.getElementById("renameClass");
+    const newClassBtn = document.getElementById("newClass");
     const addStudentBtn = document.getElementById("addStudent");
     const reasonModal = document.getElementById("reasonModal");
     const reasonButtons = document.querySelectorAll(".reasonBtn");
@@ -132,14 +131,13 @@
       }
     }
 
-    function initDefaultStudents() {
-      for (let i = 1; i <= 14; i++) {
+    function initDefaultStudents(num=14) {
+      for (let i = 1; i <= num; i++) {
         classes[currentClass].push({ name: "Student " + i, color: "green", x: 20 + i*110, y:20 });
       }
       saveData();
     }
 
-    // ======= Dropdown =======
     function buildDropdown() {
       classSelector.innerHTML = "";
       Object.keys(classes).forEach(cls => {
@@ -156,6 +154,7 @@
       renderStudents();
     });
 
+    // ======= Buttons =======
     renameClassBtn.addEventListener("click", async () => {
       const newName = prompt("Enter new class name:", currentClass);
       if (newName && newName.trim() !== "" && !classes[newName]) {
@@ -166,6 +165,25 @@
         classSelector.value = currentClass;
         await saveData();
       } else alert("Invalid name or name already exists.");
+    });
+
+    newClassBtn.addEventListener("click", async () => {
+      const newName = prompt("Enter name for new class:");
+      if (!newName || newName.trim() === "" || classes[newName]) {
+        alert("Invalid name or class already exists.");
+        return;
+      }
+      let numStudents = prompt("How many students to start with? (Enter a number)", "0");
+      numStudents = parseInt(numStudents);
+      if (isNaN(numStudents) || numStudents < 0) numStudents = 0;
+
+      classes[newName] = [];
+      currentClass = newName;
+      buildDropdown();
+      classSelector.value = currentClass;
+      if (numStudents > 0) initDefaultStudents(numStudents);
+      await saveData();
+      renderStudents();
     });
 
     addStudentBtn.addEventListener("click", () => {
