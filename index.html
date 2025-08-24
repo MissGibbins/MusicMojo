@@ -275,6 +275,8 @@
 
 
   <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwCGcuFUhojhE7tLOXW0ANd_GzYYvJjShDQVyCJx_1nBzpW4tD5148CBySYPauop2le/exec";
+    
     const canvas = document.getElementById("canvas");
     const classSelector = document.getElementById("classSelector");
     const renameClassBtn = document.getElementById("renameClass");
@@ -287,9 +289,38 @@
     let pendingStudent = null;
 
     let classes = {};
-    const savedData = localStorage.getItem("classroomData");
-    if (savedData) {
-      classes = JSON.parse(savedData);
+    // ---- Load from Google Sheets ----
+    async function loadData() {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        classes = data || {};
+      } catch (err) {
+        console.error("Error loading data:", err);
+        classes = {};
+      }
+      // Ensure 20 default classes
+      for (let i = 1; i <= 20; i++) {
+        const clsName = "Class " + i;
+        if (!classes[clsName]) classes[clsName] = [];
+      }
+      buildDropdown();
+      classSelector.value = currentClass;
+      if (classes[currentClass].length === 0) initDefaultStudents();
+      renderStudents();
+    }
+
+    // ---- Save to Google Sheets ----
+    async function saveData() {
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(classes),
+          headers: { "Content-Type": "application/json" }
+        });
+      } catch (err) {
+        console.error("Error saving data:", err);
+      }
     }
 
     for (let i = 1; i <= 20; i++) {
