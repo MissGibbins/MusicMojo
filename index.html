@@ -166,47 +166,46 @@ function renderStudents(){
 
     // Drag
     let offsetX, offsetY, isDragging=false;
-    div.addEventListener("mousedown", e=>{ 
-      isDragging=true; 
-      offsetX=e.clientX-div.offsetLeft; 
-      offsetY=e.clientY-div.offsetTop; 
-      div.style.cursor="grabbing";
+    div.addEventListener("mousedown", e=>{
+      isDragging=true;
+      offsetX=e.clientX-div.offsetLeft;
+      offsetY=e.clientY-div.offsetTop;
+      e.preventDefault();
     });
-    document.addEventListener("mousemove", e=>{ 
-      if(isDragging){ 
-        student.x=e.clientX-offsetX; 
-        student.y=e.clientY-offsetY; 
-        div.style.left=student.x+"px"; 
-        div.style.top=student.y+"px"; 
+    document.addEventListener("mousemove", e=>{
+      if(isDragging){
+        student.x=e.clientX-offsetX;
+        student.y=e.clientY-offsetY;
+        div.style.left=student.x+"px";
+        div.style.top=student.y+"px";
       }
     });
-    document.addEventListener("mouseup", async ()=>{ 
-      if(isDragging){ 
-        isDragging=false; 
-        div.style.cursor="grab";
-        await db.collection("classes").doc(currentClass).set({students}); 
+    document.addEventListener("mouseup", async ()=>{
+      if(isDragging){
+        isDragging=false;
+        await db.collection("classes").doc(currentClass).set({students});
       }
     });
 
     // Open modal on click
-    div.addEventListener("click", ()=>{
+    div.addEventListener("click", e=>{
+      if(isDragging) return;
       selectedStudent=student;
       modalStudentName.textContent=student.name;
       renameInput.value=student.name;
       numberInput.value=student.number||index+1;
       reasonModal.style.display="flex";
+      e.stopPropagation();
     });
   });
 }
 
-// Modal: prevent click from bubbling
-reasonModalContent.addEventListener("click", e=>{ e.stopPropagation(); });
-reasonModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
+// Modal: prevent clicks inside modal from closing modal
+reasonModalContent.addEventListener("click", e => e.stopPropagation());
 
 // Modal: color buttons
 colorButtons.forEach(btn=>{
-  btn.addEventListener("click", async (e)=>{
-    e.stopPropagation();
+  btn.addEventListener("click", async ()=>{
     if(!selectedStudent) return;
     const action=btn.getAttribute("data-action");
     selectedStudent.color=action;
@@ -218,31 +217,32 @@ colorButtons.forEach(btn=>{
 });
 
 // Rename
-renameBtn.addEventListener("click", async (e)=>{
+renameBtn.addEventListener("click", async e => {
   e.stopPropagation();
-  if(!selectedStudent) return;
-  const newName=renameInput.value.trim();
-  if(newName){ 
-    selectedStudent.name=newName; 
-    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); 
-    renderStudents(); 
-    modalStudentName.textContent=newName; 
+  if (!selectedStudent) return;
+  const newName = renameInput.value.trim();
+  if (newName) {
+    selectedStudent.name = newName;
+    await db.collection("classes").doc(currentClass).set({ students: classes[currentClass] });
+    renderStudents();
+    modalStudentName.textContent = newName;
+    renameInput.value = newName;
   }
 });
 
 // Change number
-numberBtn.addEventListener("click", async (e)=>{
+numberBtn.addEventListener("click", async e => {
   e.stopPropagation();
-  if(!selectedStudent) return;
-  const num=parseInt(numberInput.value);
-  if(!isNaN(num)){ 
-    selectedStudent.number=num; 
-    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); 
-    renderStudents(); 
+  if (!selectedStudent) return;
+  const num = parseInt(numberInput.value);
+  if (!isNaN(num)) {
+    selectedStudent.number = num;
+    await db.collection("classes").doc(currentClass).set({ students: classes[currentClass] });
+    renderStudents();
   }
 });
 
-closeModal.addEventListener("click", (e)=>{ e.stopPropagation(); reasonModal.style.display="none"; });
+closeModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
 
 // Export CSV
 exportBtn.addEventListener("click", ()=>{
