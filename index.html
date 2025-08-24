@@ -126,14 +126,24 @@ renameClassBtn.addEventListener("click", async () => {
   buildDropdown();
 });
 
+// Updated + New Class button with student number prompt
 newClassBtn.addEventListener("click", async () => {
   const name = prompt("Enter name for new class:");
   if (!name || classes[name]) return alert("Invalid or duplicate class name!");
-  classes[name] = [];
+
+  let num = parseInt(prompt("How many students should this class start with?", "14"));
+  if (isNaN(num) || num < 0) num = 0;
+
+  const students = [];
+  for (let i = 1; i <= num; i++) {
+    students.push({ name: "Student " + i, color: "green", x: 50 + i*10, y: 50 });
+  }
+
+  classes[name] = students;
   currentClass = name;
   buildDropdown();
-  await db.collection("classes").doc(name).set({ students: [] });
-  alert(`Class "${name}" created!`);
+  await db.collection("classes").doc(name).set({ students });
+  alert(`Class "${name}" created with ${num} students!`);
 });
 
 addStudentBtn.addEventListener("click", async () => {
@@ -155,7 +165,6 @@ function renderStudents() {
     div.innerHTML = `<div style="font-weight:bold">${index+1}</div><div>${student.name}</div>`;
     canvas.appendChild(div);
 
-    // Dragging
     let offsetX, offsetY, isDragging = false;
     div.addEventListener("mousedown", e => {
       isDragging = true;
@@ -177,7 +186,6 @@ function renderStudents() {
       }
     });
 
-    // Click to open modal
     div.addEventListener("click", () => {
       pendingStudent = student;
       reasonModal.style.display = "flex";
