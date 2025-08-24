@@ -4,29 +4,28 @@
 <meta charset="UTF-8">
 <title>MusicMojo</title>
 <style>
-  body { font-family: sans-serif; margin: 20px; }
-  header { display: flex; align-items: center; margin-bottom: 10px; }
-  header img { height: 100px; margin-right: 20px; }
-  header h1 { font-size: 32px; margin: 0; }
-  #classSelector { margin-bottom: 20px; }
-  #canvas { position: relative; width: 100%; height: 600px; border: 2px dashed #ccc; }
-  .student { width: 100px; height: 80px; background-color: #22C55F; color: white; display: flex; justify-content: center; align-items: center; cursor: grab; user-select: none; position: absolute; flex-direction: column; border-radius: 8px; font-size: 18px; text-align: center; padding: 10px; }
-  .yellow { background-color: #facc15; color: #000; }
-  .red { background-color: #ef4444; color: #fff; }
-  button { margin-top: 20px; padding: 8px 14px; cursor: pointer; }
-  .actionBtn { background-color: #22C55F; color: white; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-  .actionBtn:hover { background-color: #16a34a; }
-
-  /* Modal styles */
-  #reasonModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
-  #reasonModalContent { background: #fff; padding: 20px; border-radius: 12px; text-align: center; width: 300px; }
-  .reasonBtn { display: block; margin: 10px auto; width: 220px; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; color: #fff; }
-  .greenBtn { background: #22C55F; color: #fff; }
-  .yellowBtn { background: #facc15; color: #000; }
-  .redBtn { background: #ef4444; color: #fff; }
+body { font-family: sans-serif; margin: 20px; }
+header { display: flex; align-items: center; margin-bottom: 10px; }
+header img { height: 100px; margin-right: 20px; }
+header h1 { font-size: 32px; margin: 0; }
+#classSelector { margin-bottom: 20px; }
+#canvas { position: relative; width: 100%; height: 600px; border: 2px dashed #ccc; }
+.student { width: 100px; height: 80px; background-color: #22C55F; color: white; display: flex; justify-content: center; align-items: center; cursor: grab; user-select: none; position: absolute; flex-direction: column; border-radius: 8px; font-size: 18px; text-align: center; padding: 10px; }
+.yellow { background-color: #facc15; color: #000; }
+.red { background-color: #ef4444; color: #fff; }
+button { margin-top: 20px; padding: 8px 14px; cursor: pointer; }
+.actionBtn { background-color: #22C55F; color: white; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.actionBtn:hover { background-color: #16a34a; }
+#reasonModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
+#reasonModalContent { background: #fff; padding: 20px; border-radius: 12px; text-align: center; width: 300px; }
+.reasonBtn { display: block; margin: 10px auto; width: 220px; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; color: #fff; }
+.greenBtn { background: #22C55F; color: #fff; }
+.yellowBtn { background: #facc15; color: #000; }
+.redBtn { background: #ef4444; color: #fff; }
 </style>
 </head>
 <body>
+
 <header>
   <img src="MusicMojo logo.png" alt="MusicMojo Logo">
   <h1>MusicMojo</h1>
@@ -41,7 +40,6 @@
 
 <div id="canvas"></div>
 
-<!-- Modal for actions -->
 <div id="reasonModal">
   <div id="reasonModalContent">
     <h3>Select Action</h3>
@@ -54,7 +52,6 @@
   </div>
 </div>
 
-<!-- Firebase SDK (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -86,7 +83,7 @@ let currentClass = "";
 let pendingStudent = null;
 let log = [];
 
-// Load classes from Firestore
+// Load classes
 async function loadClasses() {
   const snapshot = await db.collection("classes").get();
   classes = {};
@@ -126,7 +123,6 @@ renameClassBtn.addEventListener("click", async () => {
   buildDropdown();
 });
 
-// + New Class button
 newClassBtn.addEventListener("click", async () => {
   const name = prompt("Enter name for new class:");
   if (!name || classes[name]) return alert("Invalid or duplicate class name!");
@@ -164,27 +160,9 @@ function renderStudents() {
     numberDiv.textContent = student.number || index + 1;
     numberDiv.style.fontWeight = "bold";
     numberDiv.style.marginBottom = "5px";
-    numberDiv.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const newNum = parseInt(prompt("Enter new student number:", student.number || index + 1));
-      if (!isNaN(newNum)) {
-        student.number = newNum;
-        await db.collection("classes").doc(currentClass).set({ students });
-        renderStudents(); // update immediately
-      }
-    });
 
     const nameDiv = document.createElement("div");
     nameDiv.textContent = student.name;
-    nameDiv.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      const newName = prompt("Enter new student name:", student.name);
-      if (newName && newName.trim() !== "") {
-        student.name = newName.trim();
-        await db.collection("classes").doc(currentClass).set({ students });
-        renderStudents(); // update immediately
-      }
-    });
 
     div.appendChild(numberDiv);
     div.appendChild(nameDiv);
@@ -212,15 +190,41 @@ function renderStudents() {
       }
     });
 
-    // Double click opens action modal
-    div.addEventListener("dblclick", () => {
+    // Click vs double-click
+    let clickTimeout = null;
+    div.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (clickTimeout === null) {
+        clickTimeout = setTimeout(async () => {
+          clickTimeout = null;
+          if (e.target === nameDiv) {
+            const newName = prompt("Enter new student name:", student.name);
+            if (newName && newName.trim() !== "") {
+              student.name = newName.trim();
+              await db.collection("classes").doc(currentClass).set({ students });
+              renderStudents();
+            }
+          } else if (e.target === numberDiv) {
+            const newNum = parseInt(prompt("Enter new student number:", student.number || index + 1));
+            if (!isNaN(newNum)) {
+              student.number = newNum;
+              await db.collection("classes").doc(currentClass).set({ students });
+              renderStudents();
+            }
+          }
+        }, 250);
+      }
+    });
+
+    div.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      if (clickTimeout) { clearTimeout(clickTimeout); clickTimeout = null; }
       pendingStudent = student;
       reasonModal.style.display = "flex";
     });
   });
 }
 
-// Modal buttons
 reasonButtons.forEach(btn => {
   btn.addEventListener("click", async () => {
     if (!pendingStudent) return;
@@ -256,5 +260,6 @@ exportBtn.addEventListener("click", () => {
 
 loadClasses();
 </script>
+
 </body>
 </html>
