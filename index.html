@@ -94,6 +94,8 @@ let classes = {};
 let currentClass = "";
 let selectedStudent = null;
 let log = [];
+let draggedStudent = null;
+let offsetX=0, offsetY=0;
 
 // Load classes
 async function loadClasses(){
@@ -150,6 +152,7 @@ function renderStudents(){
     div.className=`student ${student.color}`;
     div.style.left=student.x+"px";
     div.style.top=student.y+"px";
+    div.dataset.index=index; // store index for modal reference
 
     const numberDiv=document.createElement("div");
     numberDiv.textContent=student.number||index+1;
@@ -163,53 +166,42 @@ function renderStudents(){
     div.appendChild(nameDiv);
     canvas.appendChild(div);
 
-    // Open modal on click
-    div.addEventListener("click", ()=>{
-      selectedStudent=student;
-      modalStudentName.textContent=student.name;
-      renameInput.value=student.name;
-      numberInput.value=student.number||index+1;
-      reasonModal.style.display="flex";
+    // Drag
+    div.addEventListener("mousedown", e=>{
+      draggedStudent=student;
+      offsetX=e.clientX-div.offsetLeft;
+      offsetY=e.clientY-div.offsetTop;
+      div.style.cursor="grabbing";
+      e.preventDefault();
     });
   });
 }
 
-// Dragging logic
-let draggedStudent = null;
-let draggedDiv = null;
-let offsetX = 0, offsetY = 0;
-let isDragging = false;
-
-canvas.addEventListener("mousedown", e => {
-  const target = e.target.closest(".student");
-  if (!target) return;
-  const name = target.querySelector("div:nth-child(2)").textContent;
-  draggedStudent = classes[currentClass].find(s => s.name === name);
-  if (!draggedStudent) return;
-  draggedDiv = target;
-  isDragging = true;
-  offsetX = e.clientX - target.offsetLeft;
-  offsetY = e.clientY - target.offsetTop;
-  target.style.cursor = "grabbing";
-});
-
-document.addEventListener("mousemove", e => {
-  if (!isDragging || !draggedStudent || !draggedDiv) return;
-  draggedStudent.x = e.clientX - offsetX;
-  draggedStudent.y = e.clientY - offsetY;
-  draggedDiv.style.left = draggedStudent.x + "px";
-  draggedDiv.style.top = draggedStudent.y + "px";
-});
-
-document.addEventListener("mouseup", async () => {
-  if (!isDragging) return;
-  isDragging = false;
-  if (draggedStudent) {
-    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
-    draggedStudent = null;
-    draggedDiv = null;
+document.addEventListener("mousemove", e=>{
+  if(draggedStudent){
+    draggedStudent.x=e.clientX-offsetX;
+    draggedStudent.y=e.clientY-offsetY;
+    renderStudents();
   }
-  document.querySelectorAll(".student").forEach(div => div.style.cursor = "grab");
+});
+
+document.addEventListener("mouseup", async ()=>{
+  if(draggedStudent){
+    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+    draggedStudent=null;
+  }
+});
+
+// Click to open modal
+canvas.addEventListener("click", e=>{
+  const div = e.target.closest(".student");
+  if(!div) return;
+  const index = div.dataset.index;
+  selectedStudent = classes[currentClass][index];
+  modalStudentName.textContent = selectedStudent.name;
+  renameInput.value = selectedStudent.name;
+  numberInput.value = selectedStudent.number || index+1;
+  reasonModal.style.display="flex";
 });
 
 // Modal: color buttons
@@ -229,14 +221,23 @@ colorButtons.forEach(btn=>{
 renameBtn.addEventListener("click", async ()=>{
   if(!selectedStudent) return;
   const newName=renameInput.value.trim();
-  if(newName){ selectedStudent.name=newName; await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); renderStudents(); modalStudentName.textContent=newName; }
+  if(newName){
+    selectedStudent.name=newName;
+    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+    renderStudents();
+    modalStudentName.textContent=newName;
+  }
 });
 
 // Change number
 numberBtn.addEventListener("click", async ()=>{
   if(!selectedStudent) return;
   const num=parseInt(numberInput.value);
-  if(!isNaN(num)){ selectedStudent.number=num; await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); renderStudents(); }
+  if(!isNaN(num)){
+    selectedStudent.number=num;
+    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+    renderStudents();
+  }
 });
 
 closeModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
