@@ -95,6 +95,11 @@ let currentClass = "";
 let selectedStudent = null;
 let log = [];
 
+// Drag variables
+let draggedStudent = null;
+let offsetX = 0, offsetY = 0;
+let isDragging = false;
+
 // Load classes
 async function loadClasses(){
   const snapshot = await db.collection("classes").get();
@@ -163,9 +168,8 @@ function renderStudents(){
     div.appendChild(nameDiv);
     canvas.appendChild(div);
 
-    // Click opens modal only if not dragging
+    // Open modal on click
     div.addEventListener("click", ()=>{
-      if(isDragging) return;
       selectedStudent=student;
       modalStudentName.textContent=student.name;
       renameInput.value=student.name;
@@ -175,33 +179,34 @@ function renderStudents(){
   });
 }
 
-// Dragging
-let draggedStudent = null;
-let offsetX=0, offsetY=0;
-let isDragging=false;
-
+// Drag logic
 canvas.addEventListener("mousedown", e => {
   const target = e.target.closest(".student");
-  if(!target) return;
-  draggedStudent = classes[currentClass].find(s => s.name === target.querySelector("div:nth-child(2)").textContent);
-  if(!draggedStudent) return;
+  if (!target) return;
+  const name = target.querySelector("div:nth-child(2)").textContent;
+  draggedStudent = classes[currentClass].find(s => s.name === name);
+  if (!draggedStudent) return;
   isDragging = true;
   offsetX = e.clientX - target.offsetLeft;
   offsetY = e.clientY - target.offsetTop;
+  target.style.cursor = "grabbing";
 });
 
 document.addEventListener("mousemove", e => {
-  if(!draggedStudent) return;
+  if (!isDragging || !draggedStudent) return;
   draggedStudent.x = e.clientX - offsetX;
   draggedStudent.y = e.clientY - offsetY;
   renderStudents();
 });
 
-document.addEventListener("mouseup", async ()=>{
-  if(!draggedStudent) return;
+document.addEventListener("mouseup", async () => {
+  if (!isDragging) return;
   isDragging = false;
-  await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
-  draggedStudent = null;
+  if (draggedStudent) {
+    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
+    draggedStudent = null;
+  }
+  document.querySelectorAll(".student").forEach(div => div.style.cursor = "grab");
 });
 
 // Modal: color buttons
@@ -210,13 +215,7 @@ colorButtons.forEach(btn=>{
     if(!selectedStudent) return;
     const action=btn.getAttribute("data-action");
     selectedStudent.color=action;
-    log.push({
-      student:selectedStudent.name,
-      color:action,
-      number:selectedStudent.number,
-      reason:btn.textContent,
-      time:new Date().toLocaleString()
-    });
+    log.push({student:selectedStudent.name,color:action,reason:btn.textContent,time:new Date().toLocaleString()});
     await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
     renderStudents();
     reasonModal.style.display="none";
@@ -241,10 +240,8 @@ closeModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
 
 // Export CSV
 exportBtn.addEventListener("click", ()=>{
-  let csv="Student,Color,Number,Reason,Time\n";
-  log.forEach(entry=>{
-    csv+=`"${entry.student}","${entry.color}","${entry.number}","${entry.reason}","${entry.time}"\n`;
-  });
+  let csv="Student,Color,Number,Time\n";
+  log.forEach(entry=>{ csv+=`"${entry.student}","${entry.color}","${entry.number||""}","${entry.time}"\n`; });
   const blob=new Blob([csv],{type:"text/csv"});
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
