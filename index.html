@@ -581,6 +581,9 @@ createGroupsBtn.addEventListener("click", () => {
       a.click();
       URL.revokeObjectURL(url);
     });
+
+    function saveData() {
+      localStorage.setItem("classroomData", JSON.stringify(classes));
     }
 
     renderStudents();
