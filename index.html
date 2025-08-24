@@ -13,15 +13,12 @@ header h1 { font-size: 32px; margin: 0; }
 .student { width: 100px; height: 80px; background-color: #22C55F; color: white; display: flex; justify-content: center; align-items: center; cursor: grab; user-select: none; position: absolute; flex-direction: column; border-radius: 8px; font-size: 18px; text-align: center; padding: 10px; }
 .yellow { background-color: #facc15; color: #000; }
 .red { background-color: #ef4444; color: #fff; }
-button { margin-top: 20px; padding: 8px 14px; cursor: pointer; }
+button { margin-top: 10px; padding: 8px 14px; cursor: pointer; }
 .actionBtn { background-color: #22C55F; color: white; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
 .actionBtn:hover { background-color: #16a34a; }
-#reasonModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; }
-#reasonModalContent { background: #fff; padding: 20px; border-radius: 12px; text-align: center; width: 300px; }
-.reasonBtn { display: block; margin: 10px auto; width: 220px; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; color: #fff; }
-.greenBtn { background: #22C55F; color: #fff; }
-.yellowBtn { background: #facc15; color: #000; }
-.redBtn { background: #ef4444; color: #fff; }
+#studentModal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content: center; align-items: center; }
+#studentModalContent { background: #fff; padding: 20px; border-radius: 12px; width: 300px; text-align: center; }
+#studentModalContent input { margin:5px 0; padding:5px; width:80%; }
 </style>
 </head>
 <body>
@@ -33,22 +30,29 @@ button { margin-top: 20px; padding: 8px 14px; cursor: pointer; }
 
 <label for="classSelector">Select Class:</label>
 <select id="classSelector"></select>
-<button id="renameClass" class="actionBtn">✏️ Rename Class</button>
 <button id="newClass" class="actionBtn">+ New Class</button>
 <button id="addStudent" class="actionBtn">+ Add Student</button>
 <button id="exportLog" class="actionBtn">Export Log (CSV)</button>
 
 <div id="canvas"></div>
 
-<div id="reasonModal">
-  <div id="reasonModalContent">
-    <h3>Select Action</h3>
-    <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
-    <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
-    <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
-    <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
-    <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
-    <button class="reasonBtn redBtn" data-action="red">Reflection / Contact Home</button>
+<div id="studentModal">
+  <div id="studentModalContent">
+    <h3 id="modalStudentName"></h3>
+    <div>
+      <button class="actionBtn" id="greenBtn">Green</button>
+      <button class="actionBtn" id="yellowBtn" style="background:#facc15; color:#000;">Yellow</button>
+      <button class="actionBtn" id="redBtn" style="background:#ef4444;">Red</button>
+    </div>
+    <div>
+      <input type="text" id="renameInput" placeholder="New Name">
+      <button id="renameBtn">Rename</button>
+    </div>
+    <div>
+      <input type="number" id="numberInput" placeholder="New Number">
+      <button id="numberBtn">Set Number</button>
+    </div>
+    <button id="closeModal">Close</button>
   </div>
 </div>
 
@@ -65,201 +69,161 @@ const firebaseConfig = {
   appId: "1:442468017699:web:7c670de3485fe5961e3396",
   measurementId: "G-GXV000M8NL"
 };
-
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const classSelector = document.getElementById("classSelector");
-const renameClassBtn = document.getElementById("renameClass");
 const newClassBtn = document.getElementById("newClass");
 const addStudentBtn = document.getElementById("addStudent");
 const canvas = document.getElementById("canvas");
-const reasonModal = document.getElementById("reasonModal");
-const reasonButtons = document.querySelectorAll(".reasonBtn");
 const exportBtn = document.getElementById("exportLog");
+const studentModal = document.getElementById("studentModal");
+const modalStudentName = document.getElementById("modalStudentName");
+const greenBtn = document.getElementById("greenBtn");
+const yellowBtn = document.getElementById("yellowBtn");
+const redBtn = document.getElementById("redBtn");
+const renameInput = document.getElementById("renameInput");
+const renameBtn = document.getElementById("renameBtn");
+const numberInput = document.getElementById("numberInput");
+const numberBtn = document.getElementById("numberBtn");
+const closeModal = document.getElementById("closeModal");
 
 let classes = {};
 let currentClass = "";
-let pendingStudent = null;
+let selectedStudent = null;
 let log = [];
 
-// Load classes
-async function loadClasses() {
+async function loadClasses(){
   const snapshot = await db.collection("classes").get();
   classes = {};
   snapshot.forEach(doc => classes[doc.id] = doc.data().students || []);
-  if (Object.keys(classes).length === 0) {
+  if(Object.keys(classes).length===0){
     classes["Class 1"] = [];
-    await db.collection("classes").doc("Class 1").set({ students: [] });
+    await db.collection("classes").doc("Class 1").set({students: []});
   }
   buildDropdown();
 }
 
-function buildDropdown() {
+function buildDropdown(){
   classSelector.innerHTML = "";
-  Object.keys(classes).forEach(cls => {
+  Object.keys(classes).forEach(cls=>{
     const option = document.createElement("option");
-    option.value = cls;
-    option.textContent = cls;
+    option.value=cls;
+    option.textContent=cls;
     classSelector.appendChild(option);
   });
   currentClass = classSelector.value || Object.keys(classes)[0];
   renderStudents();
 }
 
-classSelector.addEventListener("change", () => {
-  currentClass = classSelector.value;
-  renderStudents();
-});
+classSelector.addEventListener("change", ()=>{ currentClass = classSelector.value; renderStudents(); });
 
-renameClassBtn.addEventListener("click", async () => {
-  const newName = prompt("Enter new class name:", currentClass);
-  if (!newName || classes[newName]) return alert("Invalid or duplicate class name!");
-  classes[newName] = classes[currentClass];
-  delete classes[currentClass];
-  await db.collection("classes").doc(newName).set({ students: classes[newName] });
-  await db.collection("classes").doc(currentClass).delete();
-  currentClass = newName;
-  buildDropdown();
-});
-
-newClassBtn.addEventListener("click", async () => {
-  const name = prompt("Enter name for new class:");
-  if (!name || classes[name]) return alert("Invalid or duplicate class name!");
-  let num = parseInt(prompt("How many students should this class start with?", "14"));
-  if (isNaN(num) || num < 0) num = 0;
+newClassBtn.addEventListener("click", async ()=>{
+  const name = prompt("New class name:");
+  if(!name || classes[name]) return alert("Invalid or duplicate class name!");
+  let num = parseInt(prompt("Number of students?", "14"));
+  if(isNaN(num)||num<0) num=0;
   const students = [];
-  for (let i = 1; i <= num; i++) {
-    students.push({ name: "Student " + i, number: i, color: "green", x: 50 + i*10, y: 50 });
-  }
-  classes[name] = students;
-  currentClass = name;
+  for(let i=1;i<=num;i++) students.push({name:"Student "+i, number:i, color:"green", x:50+i*10, y:50});
+  classes[name]=students;
+  currentClass=name;
   buildDropdown();
-  await db.collection("classes").doc(name).set({ students });
-  alert(`Class "${name}" created with ${num} students!`);
+  await db.collection("classes").doc(name).set({students});
 });
 
-addStudentBtn.addEventListener("click", async () => {
+addStudentBtn.addEventListener("click", async ()=>{
   const students = classes[currentClass];
-  const newStudent = { name: "New Student", number: students.length + 1, color: "green", x: 50, y: 50 };
+  const newStudent = {name:"New Student", number:students.length+1, color:"green", x:50, y:50};
   students.push(newStudent);
-  await db.collection("classes").doc(currentClass).set({ students });
+  await db.collection("classes").doc(currentClass).set({students});
   renderStudents();
 });
 
-function renderStudents() {
-  canvas.innerHTML = "";
+function renderStudents(){
+  canvas.innerHTML="";
   const students = classes[currentClass] || [];
-  students.forEach((student, index) => {
-    const div = document.createElement("div");
-    div.className = `student ${student.color}`;
-    div.style.left = student.x + "px";
-    div.style.top = student.y + "px";
+  students.forEach((student,index)=>{
+    const div=document.createElement("div");
+    div.className=`student ${student.color}`;
+    div.style.left=student.x+"px";
+    div.style.top=student.y+"px";
 
-    const numberDiv = document.createElement("div");
-    numberDiv.textContent = student.number || index + 1;
-    numberDiv.style.fontWeight = "bold";
-    numberDiv.style.marginBottom = "5px";
+    const numberDiv=document.createElement("div");
+    numberDiv.textContent=student.number||index+1;
+    numberDiv.style.fontWeight="bold";
+    numberDiv.style.marginBottom="5px";
 
-    const nameDiv = document.createElement("div");
-    nameDiv.textContent = student.name;
+    const nameDiv=document.createElement("div");
+    nameDiv.textContent=student.name;
 
     div.appendChild(numberDiv);
     div.appendChild(nameDiv);
     canvas.appendChild(div);
 
     // Drag
-    let offsetX, offsetY, isDragging = false;
-    div.addEventListener("mousedown", e => {
-      isDragging = true;
-      offsetX = e.clientX - div.offsetLeft;
-      offsetY = e.clientY - div.offsetTop;
-    });
-    document.addEventListener("mousemove", e => {
-      if (isDragging) {
-        student.x = e.clientX - offsetX;
-        student.y = e.clientY - offsetY;
-        div.style.left = student.x + "px";
-        div.style.top = student.y + "px";
-      }
-    });
-    document.addEventListener("mouseup", async () => {
-      if (isDragging) {
-        isDragging = false;
-        await db.collection("classes").doc(currentClass).set({ students });
-      }
-    });
+    let offsetX, offsetY, isDragging=false;
+    div.addEventListener("mousedown", e=>{ isDragging=true; offsetX=e.clientX-div.offsetLeft; offsetY=e.clientY-div.offsetTop; });
+    document.addEventListener("mousemove", e=>{ if(isDragging){ student.x=e.clientX-offsetX; student.y=e.clientY-offsetY; div.style.left=student.x+"px"; div.style.top=student.y+"px"; }});
+    document.addEventListener("mouseup", async ()=>{ if(isDragging){ isDragging=false; await db.collection("classes").doc(currentClass).set({students}); }});
 
-    // Click vs double-click
-    let clickTimeout = null;
-    div.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (clickTimeout === null) {
-        clickTimeout = setTimeout(async () => {
-          clickTimeout = null;
-          if (e.target === nameDiv) {
-            const newName = prompt("Enter new student name:", student.name);
-            if (newName && newName.trim() !== "") {
-              student.name = newName.trim();
-              await db.collection("classes").doc(currentClass).set({ students });
-              renderStudents();
-            }
-          } else if (e.target === numberDiv) {
-            const newNum = parseInt(prompt("Enter new student number:", student.number || index + 1));
-            if (!isNaN(newNum)) {
-              student.number = newNum;
-              await db.collection("classes").doc(currentClass).set({ students });
-              renderStudents();
-            }
-          }
-        }, 250);
-      }
-    });
-
-    div.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      if (clickTimeout) { clearTimeout(clickTimeout); clickTimeout = null; }
-      pendingStudent = student;
-      reasonModal.style.display = "flex";
+    // Open modal on click
+    div.addEventListener("click", ()=>{
+      selectedStudent=student;
+      modalStudentName.textContent=student.name;
+      renameInput.value=student.name;
+      numberInput.value=student.number || index+1;
+      studentModal.style.display="flex";
     });
   });
 }
 
-reasonButtons.forEach(btn => {
-  btn.addEventListener("click", async () => {
-    if (!pendingStudent) return;
-    const action = btn.getAttribute("data-action");
-    pendingStudent.color = action;
-    log.push({ student: pendingStudent.name, color: action, reason: btn.textContent, time: new Date().toLocaleString() });
-    pendingStudent = null;
-    reasonModal.style.display = "none";
-    await db.collection("classes").doc(currentClass).set({ students: classes[currentClass] });
-    renderStudents();
-  });
+// Modal buttons
+greenBtn.addEventListener("click", async ()=>{
+  if(!selectedStudent) return;
+  selectedStudent.color="green";
+  await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+  renderStudents(); studentModal.style.display="none";
+});
+yellowBtn.addEventListener("click", async ()=>{
+  if(!selectedStudent) return;
+  selectedStudent.color="yellow";
+  await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+  renderStudents(); studentModal.style.display="none";
+});
+redBtn.addEventListener("click", async ()=>{
+  if(!selectedStudent) return;
+  selectedStudent.color="red";
+  await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+  renderStudents(); studentModal.style.display="none";
 });
 
-reasonModal.addEventListener("click", e => {
-  if (e.target === reasonModal) reasonModal.style.display = "none";
+renameBtn.addEventListener("click", async ()=>{
+  if(!selectedStudent) return;
+  const newName = renameInput.value.trim();
+  if(newName){ selectedStudent.name=newName; await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); renderStudents(); modalStudentName.textContent=newName; }
 });
 
-// Export log
-exportBtn.addEventListener("click", () => {
-  if (log.length === 0) return alert("No actions logged yet!");
-  let csv = "Student,Color,Reason,Time\n";
-  log.forEach(entry => {
-    csv += `"${entry.student}","${entry.color}","${entry.reason}","${entry.time}"\n`;
-  });
-  const blob = new Blob([csv], { type: "text/csv" });
+numberBtn.addEventListener("click", async ()=>{
+  if(!selectedStudent) return;
+  const num=parseInt(numberInput.value);
+  if(!isNaN(num)){ selectedStudent.number=num; await db.collection("classes").doc(currentClass).set({students:classes[currentClass]}); renderStudents(); }
+});
+
+closeModal.addEventListener("click", ()=>{ studentModal.style.display="none"; });
+
+exportBtn.addEventListener("click", ()=>{
+  let csv="Student,Color,Number\n";
+  classes[currentClass].forEach(s=>{ csv+=`"${s.name}","${s.color}","${s.number || ""}"\n`; });
+  const blob = new Blob([csv],{type:"text/csv"});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `log_${currentClass}.csv`;
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`log_${currentClass}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 });
 
 loadClasses();
 </script>
-
 </body>
 </html>
