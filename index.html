@@ -16,7 +16,12 @@
     padding: 10px 20px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  header .left {
+    display: flex;
+    align-items: center;
   }
   header img {
     height: 60px;
@@ -26,6 +31,24 @@
     font-size: 28px;
     margin: 0;
     color: #333;
+  }
+  header .right {
+    display: flex;
+    align-items: center;
+  }
+  header select, header button {
+    margin-left: 10px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  header button {
+    border: none;
+    background: #6a1b9a;
+    color: white;
+    font-weight: bold;
   }
 
   /* STUDENT GRID */
@@ -85,8 +108,15 @@
 
 <!-- HEADER -->
 <header>
-  <img src="MusicMojo logo.png" alt="MusicMojo Logo">
-  <h1>MusicMojo</h1>
+  <div class="left">
+    <img src="MusicMojo logo.png" alt="MusicMojo Logo">
+    <h1>MusicMojo</h1>
+  </div>
+  <div class="right">
+    <select id="classDropdown" onchange="switchClass(this.value)"></select>
+    <button onclick="newClass()">New Class</button>
+    <button onclick="addStudent()">Add Student</button>
+  </div>
 </header>
 
 <!-- MAIN STUDENT AREA -->
@@ -110,7 +140,7 @@
 </div>
 
 <script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbwxI2uWjYvoNo5EBILbVBQCe9wwmVjoDO1CpqTHSLo175DI2ar5cRURVX16--o5Ip7r/exec";  
+const apiUrl = "YOUR_SCRIPT_URL";  // Replace with your Apps Script Web App URL
 let classes = { "Default": [] };
 let currentClass = "Default";
 let selectedStudent = null;
@@ -135,8 +165,9 @@ async function loadStudents(){
     });
     if(Object.keys(classes).length > 0){
       currentClass = Object.keys(classes)[0];
-      renderStudents();
     }
+    updateClassDropdown();
+    renderStudents();
   } catch(err){
     console.error("Failed to load students", err);
   }
@@ -149,6 +180,7 @@ async function saveStudents(){
     studs.forEach(s => all.push({ Class: cls, ...s }));
   });
   await apiPost({ type: "saveStudents", students: all });
+  updateClassDropdown();
 }
 
 // Render
@@ -164,6 +196,47 @@ function renderStudents(){
     div.addEventListener("click", ()=>openModal(s));
     canvas.appendChild(div);
   });
+}
+
+// Update dropdown
+function updateClassDropdown(){
+  const dropdown = document.getElementById("classDropdown");
+  dropdown.innerHTML = "";
+  Object.keys(classes).forEach(cls=>{
+    const opt = document.createElement("option");
+    opt.value = cls;
+    opt.textContent = cls;
+    if(cls === currentClass) opt.selected = true;
+    dropdown.appendChild(opt);
+  });
+}
+
+// Switch class
+function switchClass(name){
+  currentClass = name;
+  renderStudents();
+}
+
+// Add new class
+function newClass(){
+  const name = prompt("Enter new class name:");
+  if(name && !classes[name]){
+    classes[name] = [];
+    currentClass = name;
+    saveStudents();
+    renderStudents();
+  }
+}
+
+// Add student
+function addStudent(){
+  const name = prompt("Enter student name:");
+  if(name){
+    const student = { Name: name, Number: classes[currentClass].length+1, Color: "lightgreen" };
+    classes[currentClass].push(student);
+    saveStudents();
+    renderStudents();
+  }
 }
 
 // Modal
