@@ -82,7 +82,6 @@ const addStudentBtn = document.getElementById("addStudent");
 const canvas = document.getElementById("canvas");
 const exportBtn = document.getElementById("exportLog");
 const reasonModal = document.getElementById("reasonModal");
-const reasonModalContent = document.getElementById("reasonModalContent");
 const modalStudentName = document.getElementById("modalStudentName");
 const colorButtons = document.querySelectorAll(".reasonBtn");
 const renameInput = document.getElementById("renameInput");
@@ -93,72 +92,72 @@ const closeModal = document.getElementById("closeModal");
 
 let classes = {};
 let currentClass = "";
-let selectedStudent = null;
+let selectedStudentIndex = null;
 let log = [];
 
 // Load classes
 async function loadClasses(){
   const snapshot = await db.collection("classes").get();
   classes = {};
-  snapshot.forEach(doc=>classes[doc.id]=doc.data().students||[]);
-  if(Object.keys(classes).length===0){
-    classes["Class 1"]=[];
-    await db.collection("classes").doc("Class 1").set({students:[]});
+  snapshot.forEach(doc => classes[doc.id] = doc.data().students || []);
+  if(Object.keys(classes).length === 0){
+    classes["Class 1"] = [];
+    await db.collection("classes").doc("Class 1").set({students: []});
   }
   buildDropdown();
 }
 
 function buildDropdown(){
-  classSelector.innerHTML="";
+  classSelector.innerHTML = "";
   Object.keys(classes).forEach(cls=>{
-    const option=document.createElement("option");
-    option.value=cls;
-    option.textContent=cls;
+    const option = document.createElement("option");
+    option.value = cls;
+    option.textContent = cls;
     classSelector.appendChild(option);
   });
-  currentClass=classSelector.value || Object.keys(classes)[0];
+  currentClass = classSelector.value || Object.keys(classes)[0];
   renderStudents();
 }
 
-classSelector.addEventListener("change", ()=>{ currentClass=classSelector.value; renderStudents(); });
+classSelector.addEventListener("change", ()=>{ currentClass = classSelector.value; renderStudents(); });
 
 newClassBtn.addEventListener("click", async ()=>{
-  const name=prompt("New class name:");
+  const name = prompt("New class name:");
   if(!name || classes[name]) return alert("Invalid or duplicate class name!");
-  let num=parseInt(prompt("Number of students?", "14"));
-  if(isNaN(num)||num<0) num=0;
-  const students=[];
-  for(let i=1;i<=num;i++) students.push({name:"Student "+i, number:i, color:"green", x:50+i*10, y:50});
-  classes[name]=students;
-  currentClass=name;
+  let num = parseInt(prompt("Number of students?", "14"));
+  if(isNaN(num) || num < 0) num = 0;
+  const students = [];
+  for(let i=1; i<=num; i++) students.push({name:"Student "+i, number:i, color:"green", x:50+i*10, y:50});
+  classes[name] = students;
+  currentClass = name;
   buildDropdown();
   await db.collection("classes").doc(name).set({students});
 });
 
 addStudentBtn.addEventListener("click", async ()=>{
-  const students=classes[currentClass];
-  const newStudent={name:"New Student", number:students.length+1, color:"green", x:50, y:50};
+  const students = classes[currentClass];
+  const newStudent = {name:"New Student", number:students.length+1, color:"green", x:50, y:50};
   students.push(newStudent);
   await db.collection("classes").doc(currentClass).set({students});
   renderStudents();
 });
 
 function renderStudents(){
-  canvas.innerHTML="";
-  const students=classes[currentClass]||[];
-  students.forEach((student,index)=>{
-    const div=document.createElement("div");
-    div.className=`student ${student.color}`;
-    div.style.left=student.x+"px";
-    div.style.top=student.y+"px";
+  canvas.innerHTML = "";
+  const students = classes[currentClass] || [];
+  students.forEach((student, index)=>{
+    const div = document.createElement("div");
+    div.className = `student ${student.color}`;
+    div.style.left = student.x+"px";
+    div.style.top = student.y+"px";
 
-    const numberDiv=document.createElement("div");
-    numberDiv.textContent=student.number||index+1;
-    numberDiv.style.fontWeight="bold";
-    numberDiv.style.marginBottom="5px";
+    const numberDiv = document.createElement("div");
+    numberDiv.textContent = student.number || index+1;
+    numberDiv.style.fontWeight = "bold";
+    numberDiv.style.marginBottom = "5px";
 
-    const nameDiv=document.createElement("div");
-    nameDiv.textContent=student.name;
+    const nameDiv = document.createElement("div");
+    nameDiv.textContent = student.name;
 
     div.appendChild(numberDiv);
     div.appendChild(nameDiv);
@@ -167,92 +166,89 @@ function renderStudents(){
     // Drag
     let offsetX, offsetY, isDragging=false;
     div.addEventListener("mousedown", e=>{
-      isDragging=true;
-      offsetX=e.clientX-div.offsetLeft;
-      offsetY=e.clientY-div.offsetTop;
-      e.preventDefault();
+      isDragging = true; 
+      offsetX = e.clientX - div.offsetLeft;
+      offsetY = e.clientY - div.offsetTop;
+      div.style.cursor = "grabbing";
     });
     document.addEventListener("mousemove", e=>{
       if(isDragging){
-        student.x=e.clientX-offsetX;
-        student.y=e.clientY-offsetY;
-        div.style.left=student.x+"px";
-        div.style.top=student.y+"px";
+        student.x = e.clientX - offsetX;
+        student.y = e.clientY - offsetY;
+        div.style.left = student.x + "px";
+        div.style.top = student.y + "px";
       }
     });
     document.addEventListener("mouseup", async ()=>{
       if(isDragging){
-        isDragging=false;
+        isDragging = false;
+        div.style.cursor = "grab";
         await db.collection("classes").doc(currentClass).set({students});
       }
     });
 
-    // Open modal on click
-    div.addEventListener("click", e=>{
-      if(isDragging) return;
-      selectedStudent=student;
-      modalStudentName.textContent=student.name;
-      renameInput.value=student.name;
-      numberInput.value=student.number||index+1;
-      reasonModal.style.display="flex";
-      e.stopPropagation();
+    // Open modal
+    div.addEventListener("click", ()=>{
+      selectedStudentIndex = index;
+      selectedStudent = student;
+      modalStudentName.textContent = student.name;
+      renameInput.value = student.name;
+      numberInput.value = student.number || index+1;
+      reasonModal.style.display = "flex";
     });
   });
 }
 
-// Modal: prevent clicks inside modal from closing modal
-reasonModalContent.addEventListener("click", e => e.stopPropagation());
-
 // Modal: color buttons
 colorButtons.forEach(btn=>{
   btn.addEventListener("click", async ()=>{
-    if(!selectedStudent) return;
-    const action=btn.getAttribute("data-action");
-    selectedStudent.color=action;
-    log.push({student:selectedStudent.name,color:action,reason:btn.textContent,time:new Date().toLocaleString()});
-    await db.collection("classes").doc(currentClass).set({students:classes[currentClass]});
+    if(selectedStudentIndex === null) return;
+    const action = btn.getAttribute("data-action");
+    classes[currentClass][selectedStudentIndex].color = action;
+    log.push({student: classes[currentClass][selectedStudentIndex].name, color: action, reason: btn.textContent, time: new Date().toLocaleString()});
+    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
     renderStudents();
-    reasonModal.style.display="none";
+    reasonModal.style.display = "none";
+    selectedStudentIndex = null;
   });
 });
 
 // Rename
-renameBtn.addEventListener("click", async e => {
-  e.stopPropagation();
-  if (!selectedStudent) return;
+renameBtn.addEventListener("click", async ()=>{
+  if(selectedStudentIndex === null) return;
   const newName = renameInput.value.trim();
-  if (newName) {
-    selectedStudent.name = newName;
-    await db.collection("classes").doc(currentClass).set({ students: classes[currentClass] });
+  if(newName){
+    classes[currentClass][selectedStudentIndex].name = newName;
+    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
     renderStudents();
     modalStudentName.textContent = newName;
-    renameInput.value = newName;
   }
 });
 
 // Change number
-numberBtn.addEventListener("click", async e => {
-  e.stopPropagation();
-  if (!selectedStudent) return;
+numberBtn.addEventListener("click", async ()=>{
+  if(selectedStudentIndex === null) return;
   const num = parseInt(numberInput.value);
-  if (!isNaN(num)) {
-    selectedStudent.number = num;
-    await db.collection("classes").doc(currentClass).set({ students: classes[currentClass] });
+  if(!isNaN(num)){
+    classes[currentClass][selectedStudentIndex].number = num;
+    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
     renderStudents();
   }
 });
 
-closeModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
+closeModal.addEventListener("click", ()=>{ reasonModal.style.display = "none"; selectedStudentIndex = null; });
 
 // Export CSV
 exportBtn.addEventListener("click", ()=>{
   let csv="Student,Color,Number,Time\n";
-  log.forEach(entry=>{ csv+=`"${entry.student}","${entry.color}","${entry.number||""}","${entry.time}"\n`; });
-  const blob=new Blob([csv],{type:"text/csv"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download=`log_${currentClass}.csv`;
+  log.forEach(entry=>{
+    csv+=`"${entry.student}","${entry.color}","${entry.number||""}","${entry.time}"\n`;
+  });
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `log_${currentClass}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 });
