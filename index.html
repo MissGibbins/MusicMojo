@@ -5,17 +5,47 @@
   <title>MusicMojo Classroom</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+
+    /* White header with image + buttons */
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #5a2d82; /* deep purple */
-      color: white;
-      padding: 15px 20px;
+      background: white;
+      border-bottom: 2px solid #ddd;
+      padding: 10px 20px;
     }
-    header h1 { margin: 0; font-size: 20px; }
-    #controls { display: flex; gap: 10px; align-items: center; }
-    #student-area { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; }
+    #logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #logo img {
+      height: 40px;
+    }
+    #controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button, select {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #f7f7f7;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #eee;
+    }
+
+    /* Student grid */
+    #student-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 20px;
+    }
     .student {
       width: 100px; height: 100px; background: green; color: white;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -23,6 +53,8 @@
     }
     .yellow { background: gold; color: black; }
     .red { background: crimson; }
+
+    /* Modal */
     #modal {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
@@ -30,22 +62,18 @@
     #modalContent {
       background: white; padding: 20px; border-radius: 10px; text-align: center;
     }
-    button, select {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-    }
-    #newClassBtn { background: #f39c12; color: white; }
-    #newClassBtn:hover { background: #e67e22; }
   </style>
 </head>
 <body>
   <header>
-    <h1>🎵 MusicMojo Classroom</h1>
+    <div id="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Music_icon.png/600px-Music_icon.png" alt="Logo">
+      <h1>MusicMojo Classroom</h1>
+    </div>
     <div id="controls">
       <select id="classDropdown"></select>
       <button id="newClassBtn">+ New Class</button>
+      <button id="addStudentBtn">+ Add Student</button>
     </div>
   </header>
 
@@ -185,6 +213,16 @@
       currentClass = name;
       buildDropdown();
       await saveStudents();
+    });
+
+    document.getElementById("addStudentBtn").addEventListener("click", async ()=>{
+      if (!currentClass) return alert("Please select or create a class first!");
+      const name = prompt("Enter student name:");
+      if (!name) return;
+      const num = classes[currentClass].length + 1;
+      classes[currentClass].push({name, number:num, color:"green"});
+      await saveStudents();
+      renderStudents();
     });
 
     loadStudents();
