@@ -1,8 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>MusicMojo Classroom</title>
+<meta charset="UTF-8">
+<title>MusicMojo</title>
+<style>
+body { font-family: sans-serif; margin: 20px; }
+header { display: flex; align-items: center; margin-bottom: 10px; }
+header img { height: 100px; margin-right: 20px; }
+header h1 { font-size: 32px; margin: 0; }
+#classSelector { margin-bottom: 20px; }
+#canvas { position: relative; width: 100%; height: 600px; border: 2px dashed #ccc; }
+.student { width: 100px; height: 80px; background-color: #22C55F; color: white; display: flex; justify-content: center; align-items: center; cursor: grab; user-select: none; position: absolute; flex-direction: column; border-radius: 8px; font-size: 18px; text-align: center; padding: 10px; }
+.yellow { background-color: #facc15; color: #000; }
+.red { background-color: #ef4444; color: #fff; }
+.actionBtn { background-color: #22C55F; color: white; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+.actionBtn:hover { background-color: #16a34a; }
+#reasonModal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content: center; align-items: center; }
+#reasonModalContent { background: #fff; padding: 20px; border-radius: 12px; width: 320px; text-align: center; }
+.reasonBtn { display: block; margin: 10px auto; width: 220px; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+.greenBtn { background: #22C55F; color: #fff; }
+.yellowBtn { background: #facc15; color: #000; }
+.redBtn { background: #ef4444; color: #fff; }
+#renameInput, #numberInput { width: 90%; padding: 5px; margin:5px 0; }
+#renameBtn, #numberBtn { padding:5px 10px; margin-bottom:5px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<header>
+<img src="MusicMojo logo.png" alt="MusicMojo Logo">
+<h1>MusicMojo</h1>
+</header>
+
+<label for="classSelector">Select Class:</label>
+<select id="classSelector"></select>
+<button id="newClass" class="actionBtn">+ New Class</button>
+<button id="addStudent" class="actionBtn">+ Add Student</button>
+<button id="exportLog" class="actionBtn">Export Log (CSV)</button>
+
+<div id="canvas"></div>
   <style>
     body {
       font-family: sans-serif;
