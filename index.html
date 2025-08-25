@@ -44,14 +44,12 @@ header h1 { font-size: 32px; margin: 0; }
 <div id="reasonModal">
 <div id="reasonModalContent">
 <h3 id="modalStudentName"></h3>
-<!-- Color buttons -->
 <button class="reasonBtn greenBtn" data-action="green">Back to Green</button>
 <button class="reasonBtn yellowBtn" data-action="yellow">Follow Directions</button>
 <button class="reasonBtn yellowBtn" data-action="yellow">Be Respectful</button>
 <button class="reasonBtn yellowBtn" data-action="yellow">Be Responsible</button>
 <button class="reasonBtn yellowBtn" data-action="yellow">Show What You Know</button>
 <button class="reasonBtn redBtn" data-action="red">Reflection / Contact Home</button>
-<!-- Rename and number -->
 <input type="text" id="renameInput" placeholder="New Name">
 <button id="renameBtn">Rename</button>
 <input type="number" id="numberInput" placeholder="New Number">
@@ -60,21 +58,8 @@ header h1 { font-size: 32px; margin: 0; }
 </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDsV5k4-TzsLFVAFv5aNVi2bcEFh4A7uIE",
-  authDomain: "musicmojo-5113d.firebaseapp.com",
-  projectId: "musicmojo-5113d",
-  storageBucket: "musicmojo-5113d.firebasestorage.app",
-  messagingSenderId: "442468017699",
-  appId: "1:442468017699:web:7c670de3485fe5961e3396",
-  measurementId: "G-GXV000M8NL"
-};
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const API_URL = "https://script.google.com/macros/s/AKfycbxiRozTFA_QkMdZivwtbY35fuFGxA7UAAKad3jfi0UdNOHk9A1NZeFQhq4rO8aixwPt/exec"; 
 
 const classSelector = document.getElementById("classSelector");
 const newClassBtn = document.getElementById("newClass");
@@ -92,23 +77,61 @@ const closeModal = document.getElementById("closeModal");
 
 let classes = {};
 let currentClass = "";
-let selectedStudentIndex = null;
+let selectedStudent = null;
 let log = [];
 
-// Load classes
-async function loadClasses(){
-  const snapshot = await db.collection("classes").get();
+// --- API FUNCTIONS ---
+async function apiPost(data){
+  const res = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+async function loadStudents(){
+  const data = await apiPost({type:"getStudents"});
   classes = {};
-  snapshot.forEach(doc => classes[doc.id] = doc.data().students || []);
-  if(Object.keys(classes).length === 0){
-    classes["Class 1"] = [];
-    await db.collection("classes").doc("Class 1").set({students: []});
+  data.forEach(s=>{
+    if(!classes[s.Class]) classes[s.Class]=[];
+    classes[s.Class].push({
+      name: s.Name, 
+      number: parseInt(s.Number), 
+      color: s.Color, 
+      x: parseFloat(s.X), 
+      y: parseFloat(s.Y)
+    });
+  });
+  if(Object.keys(classes).length===0){
+    classes["Class 1"]=[];
   }
   buildDropdown();
 }
 
+async function saveStudents(){
+  const allStudents = [];
+  Object.keys(classes).forEach(cls=>{
+    classes[cls].forEach(s=>{
+      allStudents.push({
+        Class: cls, 
+        Name: s.name, 
+        Number: s.number, 
+        Color: s.color, 
+        X: s.x, 
+        Y: s.y
+      });
+    });
+  });
+  await apiPost({type:"saveStudents", students: allStudents});
+}
+
+async function logAction(student,color,number,reason){
+  await apiPost({type:"logAction", student, color, number, reason});
+}
+
+// --- BUILD DROPDOWN ---
 function buildDropdown(){
-  classSelector.innerHTML = "";
+  classSelector.innerHTML="";
   Object.keys(classes).forEach(cls=>{
     const option = document.createElement("option");
     option.value = cls;
@@ -119,45 +142,47 @@ function buildDropdown(){
   renderStudents();
 }
 
-classSelector.addEventListener("change", ()=>{ currentClass = classSelector.value; renderStudents(); });
+// --- EVENTS ---
+classSelector.addEventListener("change", ()=>{ currentClass=classSelector.value; renderStudents(); });
 
 newClassBtn.addEventListener("click", async ()=>{
   const name = prompt("New class name:");
   if(!name || classes[name]) return alert("Invalid or duplicate class name!");
   let num = parseInt(prompt("Number of students?", "14"));
-  if(isNaN(num) || num < 0) num = 0;
-  const students = [];
-  for(let i=1; i<=num; i++) students.push({name:"Student "+i, number:i, color:"green", x:50+i*10, y:50});
-  classes[name] = students;
-  currentClass = name;
+  if(isNaN(num) || num<0) num=0;
+  const students=[];
+  for(let i=1;i<=num;i++) students.push({name:"Student "+i, number:i, color:"green", x:50+i*10, y:50});
+  classes[name]=students;
+  currentClass=name;
   buildDropdown();
-  await db.collection("classes").doc(name).set({students});
+  await saveStudents();
 });
 
 addStudentBtn.addEventListener("click", async ()=>{
-  const students = classes[currentClass];
-  const newStudent = {name:"New Student", number:students.length+1, color:"green", x:50, y:50};
+  const students=classes[currentClass];
+  const newStudent={name:"New Student", number:students.length+1, color:"green", x:50, y:50};
   students.push(newStudent);
-  await db.collection("classes").doc(currentClass).set({students});
+  await saveStudents();
   renderStudents();
 });
 
+// --- RENDER STUDENTS ---
 function renderStudents(){
-  canvas.innerHTML = "";
-  const students = classes[currentClass] || [];
-  students.forEach((student, index)=>{
-    const div = document.createElement("div");
-    div.className = `student ${student.color}`;
-    div.style.left = student.x+"px";
-    div.style.top = student.y+"px";
+  canvas.innerHTML="";
+  const students=classes[currentClass]||[];
+  students.forEach((student,index)=>{
+    const div=document.createElement("div");
+    div.className=`student ${student.color}`;
+    div.style.left=student.x+"px";
+    div.style.top=student.y+"px";
 
-    const numberDiv = document.createElement("div");
-    numberDiv.textContent = student.number || index+1;
-    numberDiv.style.fontWeight = "bold";
-    numberDiv.style.marginBottom = "5px";
+    const numberDiv=document.createElement("div");
+    numberDiv.textContent=student.number||index+1;
+    numberDiv.style.fontWeight="bold";
+    numberDiv.style.marginBottom="5px";
 
-    const nameDiv = document.createElement("div");
-    nameDiv.textContent = student.name;
+    const nameDiv=document.createElement("div");
+    nameDiv.textContent=student.name;
 
     div.appendChild(numberDiv);
     div.appendChild(nameDiv);
@@ -165,95 +190,76 @@ function renderStudents(){
 
     // Drag
     let offsetX, offsetY, isDragging=false;
-    div.addEventListener("mousedown", e=>{
-      isDragging = true; 
-      offsetX = e.clientX - div.offsetLeft;
-      offsetY = e.clientY - div.offsetTop;
-      div.style.cursor = "grabbing";
-    });
-    document.addEventListener("mousemove", e=>{
-      if(isDragging){
-        student.x = e.clientX - offsetX;
-        student.y = e.clientY - offsetY;
-        div.style.left = student.x + "px";
-        div.style.top = student.y + "px";
-      }
-    });
-    document.addEventListener("mouseup", async ()=>{
-      if(isDragging){
-        isDragging = false;
-        div.style.cursor = "grab";
-        await db.collection("classes").doc(currentClass).set({students});
-      }
-    });
+    div.addEventListener("mousedown", e=>{ isDragging=true; offsetX=e.clientX-div.offsetLeft; offsetY=e.clientY-div.offsetTop; });
+    document.addEventListener("mousemove", e=>{ if(isDragging){ student.x=e.clientX-offsetX; student.y=e.clientY-offsetY; div.style.left=student.x+"px"; div.style.top=student.y+"px"; }});
+    document.addEventListener("mouseup", async ()=>{ if(isDragging){ isDragging=false; await saveStudents(); }});
 
-    // Open modal
+    // Open modal on click
     div.addEventListener("click", ()=>{
-      selectedStudentIndex = index;
-      selectedStudent = student;
-      modalStudentName.textContent = student.name;
-      renameInput.value = student.name;
-      numberInput.value = student.number || index+1;
-      reasonModal.style.display = "flex";
+      selectedStudent=student;
+      modalStudentName.textContent=student.name;
+      renameInput.value=student.name;
+      numberInput.value=student.number||index+1;
+      reasonModal.style.display="flex";
     });
   });
 }
 
-// Modal: color buttons
+// --- MODAL ---
 colorButtons.forEach(btn=>{
   btn.addEventListener("click", async ()=>{
-    if(selectedStudentIndex === null) return;
-    const action = btn.getAttribute("data-action");
-    classes[currentClass][selectedStudentIndex].color = action;
-    log.push({student: classes[currentClass][selectedStudentIndex].name, color: action, reason: btn.textContent, time: new Date().toLocaleString()});
-    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
+    if(!selectedStudent) return;
+    const action=btn.getAttribute("data-action");
+    const reason=btn.textContent;
+    selectedStudent.color=action;
+    log.push({student:selectedStudent.name,color:action,number:selectedStudent.number,reason,time:new Date().toLocaleString()});
+    await saveStudents();
+    await logAction(selectedStudent.name, selectedStudent.color, selectedStudent.number, reason);
     renderStudents();
-    reasonModal.style.display = "none";
-    selectedStudentIndex = null;
+    reasonModal.style.display="none";
   });
 });
 
-// Rename
 renameBtn.addEventListener("click", async ()=>{
-  if(selectedStudentIndex === null) return;
+  if(!selectedStudent) return;
   const newName = renameInput.value.trim();
   if(newName){
-    classes[currentClass][selectedStudentIndex].name = newName;
-    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
+    selectedStudent.name=newName;
+    await saveStudents();
     renderStudents();
-    modalStudentName.textContent = newName;
+    modalStudentName.textContent=newName;
   }
 });
 
-// Change number
 numberBtn.addEventListener("click", async ()=>{
-  if(selectedStudentIndex === null) return;
-  const num = parseInt(numberInput.value);
+  if(!selectedStudent) return;
+  const num=parseInt(numberInput.value);
   if(!isNaN(num)){
-    classes[currentClass][selectedStudentIndex].number = num;
-    await db.collection("classes").doc(currentClass).set({students: classes[currentClass]});
+    selectedStudent.number=num;
+    await saveStudents();
     renderStudents();
   }
 });
 
-closeModal.addEventListener("click", ()=>{ reasonModal.style.display = "none"; selectedStudentIndex = null; });
+closeModal.addEventListener("click", ()=>{ reasonModal.style.display="none"; });
 
-// Export CSV
+// --- EXPORT CSV ---
 exportBtn.addEventListener("click", ()=>{
-  let csv="Student,Color,Number,Time\n";
+  let csv="Student,Color,Number,Time,Reason\n";
   log.forEach(entry=>{
-    csv+=`"${entry.student}","${entry.color}","${entry.number||""}","${entry.time}"\n`;
+    csv+=`"${entry.student}","${entry.color}","${entry.number}","${entry.time}","${entry.reason}"\n`;
   });
-  const blob = new Blob([csv], {type:"text/csv"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `log_${currentClass}.csv`;
+  const blob=new Blob([csv],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=`log_${currentClass}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 });
 
-loadClasses();
+// --- INITIAL LOAD ---
+loadStudents();
 </script>
 </body>
 </html>
