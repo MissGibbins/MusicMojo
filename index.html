@@ -4,144 +4,95 @@
 <meta charset="UTF-8">
 <title>MusicMojo</title>
 <style>
-body { font-family: sans-serif; margin: 20px; }
-header { display: flex; align-items: center; margin-bottom: 10px; }
-header img { height: 100px; margin-right: 20px; }
-header h1 { font-size: 32px; margin: 0; }
-#classSelector { margin-bottom: 20px; }
-#canvas { position: relative; width: 100%; height: 600px; border: 2px dashed #ccc; }
-.student { width: 100px; height: 80px; background-color: #22C55F; color: white; display: flex; justify-content: center; align-items: center; cursor: grab; user-select: none; position: absolute; flex-direction: column; border-radius: 8px; font-size: 18px; text-align: center; padding: 10px; }
-.yellow { background-color: #facc15; color: #000; }
-.red { background-color: #ef4444; color: #fff; }
-.actionBtn { background-color: #22C55F; color: white; border: none; padding: 8px 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-.actionBtn:hover { background-color: #16a34a; }
-#reasonModal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:none; justify-content: center; align-items: center; }
-#reasonModalContent { background: #fff; padding: 20px; border-radius: 12px; width: 320px; text-align: center; }
-.reasonBtn { display: block; margin: 10px auto; width: 220px; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
-.greenBtn { background: #22C55F; color: #fff; }
-.yellowBtn { background: #facc15; color: #000; }
-.redBtn { background: #ef4444; color: #fff; }
-#renameInput, #numberInput { width: 90%; padding: 5px; margin:5px 0; }
-#renameBtn, #numberBtn { padding:5px 10px; margin-bottom:5px; cursor:pointer; }
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    background: #f4f4f4;
+  }
+
+  /* HEADER */
+  header {
+    background: white;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  header img {
+    height: 60px;
+    margin-right: 15px;
+  }
+  header h1 {
+    font-size: 28px;
+    margin: 0;
+    color: #333;
+  }
+
+  /* STUDENT GRID */
+  #studentCanvas {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 20px;
+    gap: 10px;
+  }
+  .student {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    color: #000;
+    font-weight: bold;
+  }
+  .student span {
+    font-size: 14px;
+    text-align: center;
+  }
+
+  /* MODAL */
+  #studentModal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+  }
+  #studentModal .content {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 300px;
+    text-align: center;
+  }
+  #studentModal button {
+    margin: 5px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .green { background: lightgreen; }
+  .yellow { background: gold; }
+  .red { background: #e53935; color: white; }
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-<img src="MusicMojo logo.png" alt="MusicMojo Logo">
-<h1>MusicMojo</h1>
+  <img src="MusicMojo logo.png" alt="MusicMojo Logo">
+  <h1>MusicMojo</h1>
 </header>
 
-<label for="classSelector">Select Class:</label>
-<select id="classSelector"></select>
-<button id="newClass" class="actionBtn">+ New Class</button>
-<button id="addStudent" class="actionBtn">+ Add Student</button>
-<button id="exportLog" class="actionBtn">Export Log (CSV)</button>
-
-<div id="canvas"></div>
-  <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      background: #f4f4f4;
-    }
-    header {
-      background: white;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    header img {
-      height: 80px;
-    }
-    header .buttons {
-      display: flex;
-      gap: 10px;
-    }
-    header button {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      background: #6200ea;
-      color: white;
-      cursor: pointer;
-    }
-    header button:hover {
-      background: #4500b5;
-    }
-    #classSelect {
-      margin-left: 20px;
-      padding: 6px;
-    }
-    #studentCanvas {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 20px;
-      gap: 10px;
-    }
-    .student {
-      width: 100px;
-      height: 100px;
-      background: lightgreen;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      user-select: none;
-    }
-    .student span {
-      font-size: 14px;
-      text-align: center;
-    }
-    /* Modal */
-    #studentModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right:0; bottom:0;
-      background: rgba(0,0,0,0.5);
-      align-items: center;
-      justify-content: center;
-    }
-    #studentModal .content {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      width: 300px;
-      text-align: center;
-    }
-    #studentModal button {
-      margin: 5px;
-      padding: 6px 10px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .yellow { background: gold; }
-    .red { background: #e53935; color: white; }
-    .green { background: lightgreen; }
-  </style>
-</head>
-<body>
-
-<header>
-  <div>
-    <img src="https://via.placeholder.com/100x40?text=Logo" alt="MusicMojo">
-    <select id="classSelect"></select>
-  </div>
-  <div class="buttons">
-    <button id="newClassBtn">New Class</button>
-    <button id="addStudentBtn">Add Student</button>
-    <button id="saveBtn">Save</button>
-  </div>
-</header>
-
+<!-- MAIN STUDENT AREA -->
 <main id="studentCanvas"></main>
 
-<!-- Student Modal -->
+<!-- STUDENT MODAL -->
 <div id="studentModal">
   <div class="content">
     <h2 id="modalStudentName"></h2>
@@ -159,9 +110,9 @@ header h1 { font-size: 32px; margin: 0; }
 </div>
 
 <script>
-const apiUrl = "https://script.google.com/macros/s/AKfycbwxI2uWjYvoNo5EBILbVBQCe9wwmVjoDO1CpqTHSLo175DI2ar5cRURVX16--o5Ip7r/exec"; 
-let classes = {};
-let currentClass = null;
+const apiUrl = "https://script.google.com/macros/s/AKfycbwxI2uWjYvoNo5EBILbVBQCe9wwmVjoDO1CpqTHSLo175DI2ar5cRURVX16--o5Ip7r/exec";  
+let classes = { "Default": [] };
+let currentClass = "Default";
 let selectedStudent = null;
 
 async function apiPost(data){
@@ -173,25 +124,17 @@ async function apiPost(data){
   return res.json();
 }
 
-// Load from Sheets
+// Load students
 async function loadStudents(){
   try {
     const data = await apiPost({ type: "getStudents" });
-    classes = {};
+    classes = { "Default": [] };
     data.forEach(s => {
       if(!classes[s.Class]) classes[s.Class] = [];
       classes[s.Class].push(s);
     });
-    const classSelect = document.getElementById("classSelect");
-    classSelect.innerHTML = "";
-    Object.keys(classes).forEach(cls => {
-      const opt = document.createElement("option");
-      opt.value = cls; opt.textContent = cls;
-      classSelect.appendChild(opt);
-    });
     if(Object.keys(classes).length > 0){
       currentClass = Object.keys(classes)[0];
-      classSelect.value = currentClass;
       renderStudents();
     }
   } catch(err){
@@ -199,13 +142,11 @@ async function loadStudents(){
   }
 }
 
-// Save to Sheets
+// Save students
 async function saveStudents(){
   let all = [];
   Object.entries(classes).forEach(([cls, studs]) => {
-    studs.forEach(s => {
-      all.push({ Class: cls, ...s });
-    });
+    studs.forEach(s => all.push({ Class: cls, ...s }));
   });
   await apiPost({ type: "saveStudents", students: all });
 }
@@ -255,39 +196,7 @@ document.getElementById("renameBtn").addEventListener("click", async ()=>{
   }
 });
 
-// New class
-document.getElementById("newClassBtn").addEventListener("click", ()=>{
-  const name = prompt("Enter class name:");
-  if(!name) return;
-  if(classes[name]){ alert("Class exists"); return; }
-  classes[name] = [];
-  currentClass = name;
-  const opt = document.createElement("option");
-  opt.value = name; opt.textContent = name;
-  document.getElementById("classSelect").appendChild(opt);
-  document.getElementById("classSelect").value = name;
-  renderStudents();
-});
-
-// Switch class
-document.getElementById("classSelect").addEventListener("change", e=>{
-  currentClass = e.target.value;
-  renderStudents();
-});
-
-// Add student
-document.getElementById("addStudentBtn").addEventListener("click", ()=>{
-  if(!currentClass) return alert("No class selected");
-  const num = classes[currentClass].length+1;
-  const s = {Name:"Student "+num, Number:num, Color:"lightgreen"};
-  classes[currentClass].push(s);
-  renderStudents();
-});
-
-// Save button
-document.getElementById("saveBtn").addEventListener("click", saveStudents);
-
-// Start
+// Init
 loadStudents();
 </script>
 
