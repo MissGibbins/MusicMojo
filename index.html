@@ -1,280 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>MusicMojo</title>
-<style>
-  body {
-    font-family: sans-serif;
-    margin: 0;
-    background: #f4f4f4;
-  }
-
-  /* HEADER */
-  header {
-    background: white;
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-  header .left {
-    display: flex;
-    align-items: center;
-  }
-  header img {
-    height: 60px;
-    margin-right: 15px;
-  }
-  header h1 {
-    font-size: 28px;
-    margin: 0;
-    color: #333;
-  }
-  header .right {
-    display: flex;
-    align-items: center;
-  }
-  header select, header button {
-    margin-left: 10px;
-    padding: 8px 14px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  header button {
-    border: none;
-    background: #6a1b9a;
-    color: white;
-    font-weight: bold;
-  }
-
-  /* STUDENT GRID */
-  #studentCanvas {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 20px;
-    gap: 10px;
-  }
-  .student {
-    width: 100px;
-    height: 100px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none;
-    color: #000;
-    font-weight: bold;
-  }
-  .student span {
-    font-size: 14px;
-    text-align: center;
-  }
-
-  /* MODAL */
-  #studentModal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right:0; bottom:0;
-    background: rgba(0,0,0,0.5);
-    align-items: center;
-    justify-content: center;
-  }
-  #studentModal .content {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    width: 300px;
-    text-align: center;
-  }
-  #studentModal button {
-    margin: 5px;
-    padding: 6px 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  .green { background: lightgreen; }
-  .yellow { background: gold; }
-  .red { background: #e53935; color: white; }
-</style>
+  <meta charset="UTF-8">
+  <title>MusicMojo</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: white;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid #ccc;
+    }
+    header img {
+      height: 40px;
+      margin-right: 15px;
+    }
+    header button, header select {
+      margin-right: 10px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #aaa;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    #studentCanvas {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 20px;
+      gap: 10px;
+    }
+    .student {
+      width: 120px;
+      height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #444;
+      border-radius: 8px;
+      cursor: move;
+      user-select: none;
+      font-weight: bold;
+    }
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      min-width: 250px;
+    }
+    .modal-content label {
+      display: block;
+      margin: 8px 0 4px;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+    }
+    .close {
+      float: right;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-
-<!-- HEADER -->
-<header>
-  <div class="left">
-    <img src="MusicMojo logo.png" alt="MusicMojo Logo">
-    <h1>MusicMojo</h1>
-  </div>
-  <div class="right">
-    <select id="classDropdown" onchange="switchClass(this.value)"></select>
+  <header>
+    <img src="your_logo.png" alt="MusicMojo Logo">
     <button onclick="newClass()">New Class</button>
     <button onclick="addStudent()">Add Student</button>
-  </div>
-</header>
+    <button onclick="saveStudents()">Save</button>
+    <select id="classSelect" onchange="switchClass(this.value)">
+      <option value="">-- Select Class --</option>
+    </select>
+  </header>
 
-<!-- MAIN STUDENT AREA -->
-<main id="studentCanvas"></main>
+  <main>
+    <div id="studentCanvas"></div>
+  </main>
 
-<!-- STUDENT MODAL -->
-<div id="studentModal">
-  <div class="content">
-    <h2 id="modalStudentName"></h2>
-    <div>
-      <button class="green">Green</button>
-      <button class="yellow">Yellow</button>
-      <button class="red">Red</button>
+  <!-- Modal -->
+  <div id="studentModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h3>Edit Student</h3>
+      <label>Name</label>
+      <input type="text" id="modalName">
+      <label>Color</label>
+      <input type="color" id="modalColor">
+      <button onclick="saveModal()">Save</button>
     </div>
-    <div style="margin-top:10px;">
-      <input id="renameInput" placeholder="New name">
-      <button id="renameBtn">Rename</button>
-    </div>
-    <button id="closeModal">Close</button>
   </div>
-</div>
 
-<script>
-const apiUrl = "YOUR_SCRIPT_URL";  // Replace with your Apps Script Web App URL
-let classes = { "Default": [] };
-let currentClass = "Default";
-let selectedStudent = null;
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxI2uWjYvoNo5EBILbVBQCe9wwmVjoDO1CpqTHSLo175DI2ar5cRURVX16--o5Ip7r/exec"; // 
 
-async function apiPost(data){
-  const res = await fetch(apiUrl, {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: { "Content-Type": "application/json" }
-  });
-  return res.json();
-}
+    let classes = {};
+    let currentClass = "";
+    let currentStudent = null;
 
-// Load students
-async function loadStudents(){
-  try {
-    const data = await apiPost({ type: "getStudents" });
-    classes = { "Default": [] };
-    data.forEach(s => {
-      if(!classes[s.Class]) classes[s.Class] = [];
-      classes[s.Class].push(s);
-    });
-    if(Object.keys(classes).length > 0){
-      currentClass = Object.keys(classes)[0];
+    // --- API Helpers ---
+    async function apiPost(data){
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      return res.json();
     }
-    updateClassDropdown();
-    renderStudents();
-  } catch(err){
-    console.error("Failed to load students", err);
-  }
-}
 
-// Save students
-async function saveStudents(){
-  let all = [];
-  Object.entries(classes).forEach(([cls, studs]) => {
-    studs.forEach(s => all.push({ Class: cls, ...s }));
-  });
-  await apiPost({ type: "saveStudents", students: all });
-  updateClassDropdown();
-}
+    async function loadStudents(){
+      try {
+        const data = await apiPost({ type: "getStudents" });
+        classes = {};
+        data.forEach(s=>{
+          if(!classes[s.Class]) classes[s.Class] = [];
+          classes[s.Class].push(s);
+        });
+        populateClassSelect();
+        renderStudents();
+      } catch(err){
+        console.error("Failed to load students:", err);
+      }
+    }
 
-// Render
-function renderStudents(){
-  const canvas = document.getElementById("studentCanvas");
-  canvas.innerHTML = "";
-  if(!currentClass || !classes[currentClass]) return;
-  classes[currentClass].forEach((s,i)=>{
-    const div = document.createElement("div");
-    div.className = "student";
-    div.style.background = s.Color || "lightgreen";
-    div.innerHTML = `<span>${s.Name}</span><span>${s.Number}</span>`;
-    div.addEventListener("click", ()=>openModal(s));
-    canvas.appendChild(div);
-  });
-}
+    async function saveStudents(){
+      let students = [];
+      Object.keys(classes).forEach(cls=>{
+        classes[cls].forEach(s=>{
+          students.push(s);
+        });
+      });
+      await apiPost({ type: "saveStudents", students });
+      console.log("Saved!");
+    }
 
-// Update dropdown
-function updateClassDropdown(){
-  const dropdown = document.getElementById("classDropdown");
-  dropdown.innerHTML = "";
-  Object.keys(classes).forEach(cls=>{
-    const opt = document.createElement("option");
-    opt.value = cls;
-    opt.textContent = cls;
-    if(cls === currentClass) opt.selected = true;
-    dropdown.appendChild(opt);
-  });
-}
+    // --- UI Logic ---
+    function populateClassSelect(){
+      const sel = document.getElementById("classSelect");
+      sel.innerHTML = '<option value="">-- Select Class --</option>';
+      Object.keys(classes).forEach(c=>{
+        const opt = document.createElement("option");
+        opt.value = c;
+        opt.textContent = c;
+        if(c === currentClass) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
 
-// Switch class
-function switchClass(name){
-  currentClass = name;
-  renderStudents();
-}
+    function switchClass(name){
+      currentClass = name;
+      renderStudents();
+    }
 
-// ✅ Fixed Add new class
-function newClass(){
-  const name = prompt("Enter new class name:");
-  if(name && !classes[name]){
-    classes[name] = [];
-    currentClass = name;
-    updateClassDropdown();   // ensure it shows in dropdown
-    saveStudents();
-    renderStudents();
-  } else if(classes[name]) {
-    alert("That class already exists.");
-  }
-}
+    function newClass(){
+      const name = prompt("Enter class name:");
+      if(name && !classes[name]){
+        classes[name] = [];
+        currentClass = name;
+        populateClassSelect();
+        renderStudents();
+        saveStudents();
+      }
+    }
 
-// Add student
-function addStudent(){
-  const name = prompt("Enter student name:");
-  if(name){
-    const student = { Name: name, Number: classes[currentClass].length+1, Color: "lightgreen" };
-    classes[currentClass].push(student);
-    saveStudents();
-    renderStudents();
-  }
-}
+    function addStudent(){
+      if(!currentClass){
+        alert("Select a class first!");
+        return;
+      }
+      const list = classes[currentClass];
+      const student = {
+        Class: currentClass,
+        Name: "New Student",
+        Number: list.length+1,
+        Color: "lightgreen",
+        X: 0, Y: 0
+      };
+      list.push(student);
+      renderStudents();
+      saveStudents();
+    }
 
-// Modal
-function openModal(student){
-  selectedStudent = student;
-  document.getElementById("modalStudentName").textContent = student.Name;
-  document.getElementById("studentModal").style.display = "flex";
-}
-document.getElementById("closeModal").onclick = ()=>document.getElementById("studentModal").style.display="none";
+    function renderStudents(){
+      const canvas = document.getElementById("studentCanvas");
+      canvas.innerHTML = "";
+      if(!currentClass || !classes[currentClass]) return;
+      classes[currentClass].forEach((s,i)=>{
+        const div = document.createElement("div");
+        div.className = "student";
+        div.style.background = s.Color || "lightgreen";
+        div.draggable = true;
+        div.dataset.index = i;
+        div.innerHTML = `<span>${s.Name}</span><span>${s.Number}</span>`;
 
-// Color buttons
-["green","yellow","red"].forEach(color=>{
-  document.querySelector(`#studentModal .${color}`).addEventListener("click", async ()=>{
-    if(!selectedStudent) return;
-    selectedStudent.Color = color==="green" ? "lightgreen" : (color==="yellow" ? "gold" : "#e53935");
-    await saveStudents();
-    renderStudents();
-  });
-});
+        div.addEventListener("click", ()=>openModal(s));
+        div.addEventListener("dragstart", e=>{
+          e.dataTransfer.setData("text/plain", i);
+        });
+        div.addEventListener("dragover", e=>{
+          e.preventDefault();
+        });
+        div.addEventListener("drop", e=>{
+          e.preventDefault();
+          const fromIndex = e.dataTransfer.getData("text/plain");
+          const toIndex = div.dataset.index;
+          moveStudent(fromIndex, toIndex);
+        });
 
-// Rename
-document.getElementById("renameBtn").addEventListener("click", async ()=>{
-  if(!selectedStudent) return;
-  const newName = document.getElementById("renameInput").value.trim();
-  if(newName){
-    selectedStudent.Name = newName;
-    await saveStudents();
-    document.getElementById("modalStudentName").textContent = newName;
-    renderStudents();
-  }
-});
+        canvas.appendChild(div);
+      });
+    }
 
-// Init
-loadStudents();
-</script>
+    function moveStudent(fromIndex, toIndex){
+      fromIndex = parseInt(fromIndex);
+      toIndex = parseInt(toIndex);
+      if(fromIndex === toIndex) return;
 
+      const list = classes[currentClass];
+      const [moved] = list.splice(fromIndex, 1);
+      list.splice(toIndex, 0, moved);
+
+      list.forEach((s,i)=> s.Number = i+1);
+      saveStudents();
+      renderStudents();
+    }
+
+    // --- Modal ---
+    function openModal(student){
+      currentStudent = student;
+      document.getElementById("modalName").value = student.Name;
+      document.getElementById("modalColor").value = student.Color;
+      document.getElementById("studentModal").style.display = "flex";
+    }
+    function closeModal(){
+      document.getElementById("studentModal").style.display = "none";
+    }
+    function saveModal(){
+      if(currentStudent){
+        currentStudent.Name = document.getElementById("modalName").value;
+        currentStudent.Color = document.getElementById("modalColor").value;
+        saveStudents();
+        renderStudents();
+        closeModal();
+      }
+    }
+
+    window.onload = loadStudents;
+  </script>
 </body>
 </html>
