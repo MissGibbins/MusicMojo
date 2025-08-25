@@ -217,14 +217,17 @@ function switchClass(name){
   renderStudents();
 }
 
-// Add new class
+// ✅ Fixed Add new class
 function newClass(){
   const name = prompt("Enter new class name:");
   if(name && !classes[name]){
     classes[name] = [];
     currentClass = name;
+    updateClassDropdown();   // ensure it shows in dropdown
     saveStudents();
     renderStudents();
+  } else if(classes[name]) {
+    alert("That class already exists.");
   }
 }
 
