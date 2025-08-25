@@ -4,9 +4,18 @@
   <meta charset="UTF-8">
   <title>MusicMojo Classroom</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    header { display: flex; justify-content: space-between; align-items: center; }
-    #student-area { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #5a2d82; /* deep purple */
+      color: white;
+      padding: 15px 20px;
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    #controls { display: flex; gap: 10px; align-items: center; }
+    #student-area { display: flex; flex-wrap: wrap; gap: 10px; padding: 20px; }
     .student {
       width: 100px; height: 100px; background: green; color: white;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -21,12 +30,20 @@
     #modalContent {
       background: white; padding: 20px; border-radius: 10px; text-align: center;
     }
-    button { margin: 5px; }
+    button, select {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    #newClassBtn { background: #f39c12; color: white; }
+    #newClassBtn:hover { background: #e67e22; }
   </style>
 </head>
 <body>
   <header>
-    <div>
+    <h1>🎵 MusicMojo Classroom</h1>
+    <div id="controls">
       <select id="classDropdown"></select>
       <button id="newClassBtn">+ New Class</button>
     </div>
@@ -54,7 +71,7 @@
     let selectedStudent = null;
 
     // Google Sheets API endpoint
-    const API_URL = "https://script.google.com/macros/s/AKfycbyxJP348mWtExUVYAuttE0BMQPWnQESzUIH0kpir0XSOFQWE8DmXMwCuvIFye1_RlDE/exec";
+    const API_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE";
 
     async function apiPost(data) {
       const res = await fetch(API_URL, {
@@ -162,7 +179,7 @@
 
       classes[name] = [];
       for(let i=1; i<=count; i++){
-        classes[name].push({name:"Student "+i, number:i, color:"green", x:50+i*10, y:50});
+        classes[name].push({name:"Student "+i, number:i, color:"green"});
       }
 
       currentClass = name;
