@@ -17,7 +17,6 @@
       border-bottom: 2px solid #ccc;
     }
     header img {
-      <img src="MusicMojo logo.png" alt="MusicMojo Logo">
       height: 80px;
       margin-right: 15px;
     }
@@ -30,10 +29,11 @@
       cursor: pointer;
     }
     #studentCanvas {
-      display: flex;
-      flex-wrap: wrap;
-      padding: 20px;
-      gap: 10px;
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 120px);
+      background: #f9f9f9;
+      overflow: hidden;
     }
     .student {
       width: 120px;
@@ -44,9 +44,13 @@
       align-items: center;
       border: 2px solid #444;
       border-radius: 8px;
-      cursor: move;
-      user-select: none;
       font-weight: bold;
+      position: absolute;
+      cursor: grab;
+      user-select: none;
+    }
+    .student:active {
+      cursor: grabbing;
     }
     /* Modal */
     .modal {
@@ -83,7 +87,7 @@
 </head>
 <body>
   <header>
-    <img src="your_logo.png" alt="MusicMojo Logo">
+    <img src="MusicMojo logo.png" alt="MusicMojo Logo">
     <button onclick="newClass()">New Class</button>
     <button onclick="addStudent()">Add Student</button>
     <button onclick="saveStudents()">Save</button>
@@ -110,7 +114,7 @@
   </div>
 
   <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxI2uWjYvoNo5EBILbVBQCe9wwmVjoDO1CpqTHSLo175DI2ar5cRURVX16--o5Ip7r/exec"; // 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwxI2uWjYvoNo5EBILbVBQCe9wwmVjoDO1CpqTHSLo175DI2ar5cRURVX16--o5Ip7r/exec"; 
 
     let classes = {};
     let currentClass = "";
@@ -193,7 +197,7 @@
         Name: "New Student",
         Number: list.length+1,
         Color: "lightgreen",
-        X: 0, Y: 0
+        X: 20, Y: 20
       };
       list.push(student);
       renderStudents();
@@ -208,40 +212,41 @@
         const div = document.createElement("div");
         div.className = "student";
         div.style.background = s.Color || "lightgreen";
-        div.draggable = true;
+        div.style.left = (s.X || 20) + "px";
+        div.style.top = (s.Y || 20) + "px";
+        div.style.position = "absolute";
         div.dataset.index = i;
         div.innerHTML = `<span>${s.Name}</span><span>${s.Number}</span>`;
 
-        div.addEventListener("click", ()=>openModal(s));
-        div.addEventListener("dragstart", e=>{
-          e.dataTransfer.setData("text/plain", i);
+        // Dragging
+        let offsetX, offsetY;
+        div.addEventListener("mousedown", e=>{
+          offsetX = e.clientX - div.offsetLeft;
+          offsetY = e.clientY - div.offsetTop;
+
+          function onMouseMove(e2){
+            div.style.left = (e2.clientX - offsetX) + "px";
+            div.style.top = (e2.clientY - offsetY) + "px";
+          }
+
+          function onMouseUp(e2){
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+            // save new pos
+            s.X = parseInt(div.style.left);
+            s.Y = parseInt(div.style.top);
+            saveStudents();
+          }
+
+          document.addEventListener("mousemove", onMouseMove);
+          document.addEventListener("mouseup", onMouseUp);
         });
-        div.addEventListener("dragover", e=>{
-          e.preventDefault();
-        });
-        div.addEventListener("drop", e=>{
-          e.preventDefault();
-          const fromIndex = e.dataTransfer.getData("text/plain");
-          const toIndex = div.dataset.index;
-          moveStudent(fromIndex, toIndex);
-        });
+
+        // Double-click to edit
+        div.addEventListener("dblclick", ()=>openModal(s));
 
         canvas.appendChild(div);
       });
-    }
-
-    function moveStudent(fromIndex, toIndex){
-      fromIndex = parseInt(fromIndex);
-      toIndex = parseInt(toIndex);
-      if(fromIndex === toIndex) return;
-
-      const list = classes[currentClass];
-      const [moved] = list.splice(fromIndex, 1);
-      list.splice(toIndex, 0, moved);
-
-      list.forEach((s,i)=> s.Number = i+1);
-      saveStudents();
-      renderStudents();
     }
 
     // --- Modal ---
