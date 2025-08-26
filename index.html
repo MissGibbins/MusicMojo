@@ -1,191 +1,406 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>MusicMojo</title>
-<style>
-body { font-family: sans-serif; margin:0; padding:0; }
-header { background:white; padding:10px; display:flex; align-items:center; border-bottom:2px solid #ccc; }
-header img { height:80px; margin-right:15px; }
-header select, header button { margin-right:10px; padding:6px 12px; border-radius:6px; border:1px solid #aaa; cursor:pointer; }
-#canvas { position:relative; width:100%; height:600px; border:2px dashed #ccc; margin-top:10px; }
-.student { width:100px; height:80px; display:flex; flex-direction:column; justify-content:center; align-items:center; border-radius:8px; cursor:grab; position:absolute; font-weight:bold; user-select:none; }
-.yellow { background:#facc15; color:#000; }
-.red { background:#ef4444; color:#fff; }
-.green { background:#22C55F; color:#fff; }
-.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
-.modal-content { background:white; padding:20px; border-radius:12px; width:320px; text-align:center; }
-.modal-content input { width:90%; padding:5px; margin:5px 0; }
-.modal-content button { margin:5px; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; }
-.greenBtn{background:#22C55F;color:#fff;}
-.yellowBtn{background:#facc15;color:#000;}
-.redBtn{background:#ef4444;color:#fff;}
-</style>
+  <base target="_top">
+  <meta charset="utf-8">
+  <title>MusicMojo</title>
+  <style>
+    :root {
+      --green: #22C55F;
+      --yellow: #facc15;
+      --red: #ef4444;
+      --border: #ccc;
+    }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    header {
+      background:#fff;
+      border-bottom:2px solid var(--border);
+      padding:10px 14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    header img {
+      height: 70px;
+      width: auto;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .spacer { flex: 1; }
+    .controls { display:flex; align-items:center; gap:10px; }
+    select, button {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      background: #f7f7f7;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button.primary {
+      background: var(--green);
+      border-color: var(--green);
+      color:#fff;
+    }
+
+    #canvasWrap { padding:16px; }
+    #canvas {
+      position: relative;
+      width: 100%;
+      height: 600px;
+      border: 2px dashed var(--border);
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .student {
+      position: absolute;
+      width: 120px; height: 84px;
+      border-radius: 10px;
+      color: #000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      user-select: none;
+      cursor: grab;
+      box-shadow: 0 2px 6px rgba(0,0,0,.12);
+      border: 2px solid #333;
+      padding: 6px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .student.green { background: var(--green); color: #fff; }
+    .student.yellow { background: var(--yellow); color: #000; }
+    .student.red { background: var(--red); color: #fff; }
+    .num { font-size: 16px; margin-bottom: 4px; }
+    .name { font-size: 14px; }
+
+    /* Modal */
+    #reasonModal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    #modalCard {
+      width: 360px; max-width: calc(100% - 40px);
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.25);
+    }
+    #modalHeader { display:flex; align-items:center; justify-content: space-between; }
+    #modalHeader h3 { margin:0; font-size: 18px; }
+    #modalBody { margin-top: 12px; }
+    .reason-grid { display:grid; grid-template-columns: 1fr; gap:8px; }
+    .reason-btn {
+      padding:10px; border:none; border-radius:8px; font-size:14px; cursor:pointer; width:100%;
+    }
+    .reason-green { background: var(--green); color:#fff; }
+    .reason-yellow { background: var(--yellow); color:#000; }
+    .reason-red { background: var(--red); color:#fff; }
+
+    .row { display:flex; gap:8px; align-items:center; margin-top: 10px; }
+    .row input[type="text"], .row input[type="number"] {
+      flex:1; padding:8px; border:1px solid #bbb; border-radius:8px;
+    }
+    .close-btn { background:#eee; }
+  </style>
 </head>
 <body>
-
-<header>
-<img src="MusicMojo logo.png" alt="MusicMojo Logo">
-<select id="classSelect"></select>
-<button onclick="newClass()">New Class</button>
-<button onclick="addStudent()">Add Student</button>
-<button onclick="saveStudents()">Save</button>
-</header>
-
-<div id="canvas"></div>
-
-<!-- Modal -->
-<div id="studentModal" class="modal">
-  <div class="modal-content">
-    <h3 id="modalStudentName"></h3>
-    <button class="greenBtn" onclick="setColor('green')">Green</button>
-    <button class="yellowBtn" onclick="setColor('yellow')">Follow Directions</button>
-    <button class="yellowBtn" onclick="setColor('yellow')">Be Respectful</button>
-    <button class="yellowBtn" onclick="setColor('yellow')">Be Responsible</button>
-    <button class="yellowBtn" onclick="setColor('yellow')">Show What You Know</button>
-    <button class="redBtn" onclick="setColor('red')">Reflection / Contact Home</button>
-    <div>
-      <input type="text" id="renameInput" placeholder="New Name">
-      <button onclick="renameStudent()">Rename</button>
+  <header>
+    <img src="MusicMojo logo.png" alt="MusicMojo Logo" onerror="this.style.display='none'">
+    <h1>MusicMojo</h1>
+    <div class="spacer"></div>
+    <div class="controls">
+      <label for="classSelect" style="font-weight:600;">Class:</label>
+      <select id="classSelect"></select>
+      <button id="newClassBtn">+ New Class</button>
+      <button id="addStudentBtn" class="primary">+ Add Student</button>
     </div>
-    <div>
-      <input type="number" id="numberInput" placeholder="New Number">
-      <button onclick="renumberStudent()">Set Number</button>
-    </div>
-    <button onclick="closeModal()">Close</button>
+  </header>
+
+  <div id="canvasWrap">
+    <div id="canvas"></div>
   </div>
-</div>
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrJLtI31KFFh-8PFA7-5qCpM8aL-FHXTp4TIy6KbCgeQkYgacF_YzecyGuGFh6BUUk/exec"; 
-let classes = {};
-let currentClass = "";
-let selectedStudent = null;
+  <!-- Modal -->
+  <div id="reasonModal">
+    <div id="modalCard">
+      <div id="modalHeader">
+        <h3 id="modalTitle">Edit Student</h3>
+        <button id="closeModal" class="close-btn">Close</button>
+      </div>
 
-// Load students
-async function loadStudents(){
-  try {
-    const data = await fetch(SCRIPT_URL,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({type:"getStudents"})
-    }).then(r=>r.json());
+      <div id="modalBody">
+        <div class="reason-grid">
+          <button class="reason-btn reason-green" data-color="green">Back to Green</button>
 
-    classes = {};
-    data.forEach(s=>{
-      if(!classes[s.Class]) classes[s.Class]=[];
-      classes[s.Class].push(s);
-    });
+          <button class="reason-btn reason-yellow" data-color="yellow" data-reason="Follow Directions">Follow Directions</button>
+          <button class="reason-btn reason-yellow" data-color="yellow" data-reason="Be Respectful">Be Respectful</button>
+          <button class="reason-btn reason-yellow" data-color="yellow" data-reason="Be Responsible">Be Responsible</button>
+          <button class="reason-btn reason-yellow" data-color="yellow" data-reason="Show What You Know">Show What You Know</button>
 
-    if(!currentClass && Object.keys(classes).length>0) currentClass=Object.keys(classes)[0];
-    populateClassSelect();
-    renderStudents();
-  } catch(err){ console.error(err); }
-}
+          <button class="reason-btn reason-red" data-color="red" data-reason="Reflection / Contact Home">Reflection / Contact Home</button>
+        </div>
 
-// Save students
-async function saveStudents(){
-  let all = [];
-  Object.keys(classes).forEach(cls=>{
-    classes[cls].forEach(s=>all.push({Class:cls,...s}));
-  });
-  await fetch(SCRIPT_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({type:"saveStudents", students:all})
-  });
-}
+        <div class="row">
+          <input type="text" id="renameInput" placeholder="New name">
+          <button id="renameBtn">Rename</button>
+        </div>
 
-// Populate dropdown
-function populateClassSelect(){
-  const sel = document.getElementById("classSelect");
-  sel.innerHTML="";
-  Object.keys(classes).forEach(c=>{
-    const opt=document.createElement("option");
-    opt.value=c; opt.textContent=c;
-    if(c===currentClass) opt.selected=true;
-    sel.appendChild(opt);
-  });
-}
+        <div class="row">
+          <input type="number" id="numberInput" placeholder="New number">
+          <button id="numberBtn">Set Number</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-// Switch class
-document.getElementById("classSelect").addEventListener("change", e=>{
-  currentClass=e.target.value;
-  renderStudents();
-});
+  <script>
+    /***
+     * Data model held in memory:
+     * classes = { "Class Name": [ {Class,Name,Number,Color,X,Y}, ... ] }
+     */
+    let classes = {};
+    let currentClass = null;
+    let selectedStudent = null;
 
-// New class
-function newClass(){
-  const name = prompt("Enter class name:");
-  if(!name || classes[name]) return;
-  classes[name]=[];
-  currentClass=name;
-  populateClassSelect();
-  renderStudents();
-  saveStudents();
-}
+    // --- Utilities ---
+    function debounce(fn, wait=350) {
+      let t; 
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(()=>fn(...args), wait);
+      };
+    }
 
-// Add student
-function addStudent(){
-  if(!currentClass) return alert("Select class first");
-  const list = classes[currentClass];
-  const student = {Name:"New Student",Number:list.length+1,Color:"green",X:50,Y:50};
-  list.push(student);
-  renderStudents();
-  saveStudents();
-}
+    function flattenAllStudents(){
+      const out = [];
+      Object.entries(classes).forEach(([cls, list])=>{
+        list.forEach(s => out.push({
+          Class: cls,
+          Name: s.Name,
+          Number: Number(s.Number)||0,
+          Color: s.Color || 'green',
+          X: Number(s.X)||0,
+          Y: Number(s.Y)||0
+        }));
+      });
+      return out;
+    }
 
-// Render students
-function renderStudents(){
-  const canvas = document.getElementById("canvas");
-  canvas.innerHTML="";
-  if(!currentClass || !classes[currentClass]) return;
-  classes[currentClass].forEach((s,i)=>{
-    const div = document.createElement("div");
-    div.className="student "+s.Color;
-    div.style.left=s.X+"px";
-    div.style.top=s.Y+"px";
-    div.textContent=s.Name;
-    div.addEventListener("dblclick", ()=>{
-      selectedStudent=s;
-      document.getElementById("modalStudentName").textContent=s.Name;
-      document.getElementById("renameInput").value=s.Name;
-      document.getElementById("numberInput").value=s.Number;
-      document.getElementById("studentModal").style.display="flex";
-    });
-    // Dragging
-    let offsetX,offsetY,isDragging=false;
-    div.addEventListener("mousedown", e=>{
-      isDragging=true;
-      offsetX=e.clientX-div.offsetLeft;
-      offsetY=e.clientY-div.offsetTop;
-    });
-    document.addEventListener("mousemove", e=>{
-      if(isDragging){
-        s.X=e.clientX-offsetX;
-        s.Y=e.clientY-offsetY;
-        div.style.left=s.X+"px";
-        div.style.top=s.Y+"px";
+    const saveStudents = debounce(function(){
+      const students = flattenAllStudents();
+      google.script.run
+        .withSuccessHandler(() => console.log('Saved', new Date().toLocaleTimeString()))
+        .withFailureHandler(err => console.error('Save failed', err))
+        .saveStudents(students);
+    }, 300);
+
+    // --- Load from server ---
+    function loadStudents(){
+      google.script.run
+        .withSuccessHandler((data)=>{
+          classes = {};
+          if (Array.isArray(data)) {
+            data.forEach(s=>{
+              if(!classes[s.Class]) classes[s.Class] = [];
+              classes[s.Class].push({...s});
+            });
+          }
+          // Default class if none
+          if (Object.keys(classes).length === 0) {
+            classes['Class 1'] = [];
+            for (let i=1;i<=14;i++) {
+              classes['Class 1'].push({
+                Class: 'Class 1',
+                Name: 'Student ' + i,
+                Number: i,
+                Color: 'green',
+                X: 30 + ((i-1)%7)*135,
+                Y: 30 + Math.floor((i-1)/7)*120
+              });
+            }
+            currentClass = 'Class 1';
+            buildClassDropdown();
+            render();
+            saveStudents(); // persist default
+            return;
+          }
+          // Set current class
+          currentClass = Object.keys(classes)[0];
+          buildClassDropdown();
+          render();
+        })
+        .withFailureHandler(err => console.error('Load failed', err))
+        .getStudents();
+    }
+
+    // --- UI: class dropdown & controls ---
+    function buildClassDropdown(){
+      const sel = document.getElementById('classSelect');
+      sel.innerHTML = '';
+      Object.keys(classes).forEach(cls=>{
+        const opt = document.createElement('option');
+        opt.value = cls; opt.textContent = cls;
+        sel.appendChild(opt);
+      });
+      if (currentClass) sel.value = currentClass;
+      sel.onchange = e => { currentClass = e.target.value; render(); };
+    }
+
+    document.getElementById('newClassBtn').onclick = () => {
+      const name = prompt('New class name:');
+      if (!name) return;
+      if (classes[name]) { alert('Class already exists'); return; }
+      let count = parseInt(prompt('How many students?', '14'), 10);
+      if (isNaN(count) || count < 0) count = 0;
+      classes[name] = [];
+      for (let i=1;i<=count;i++){
+        classes[name].push({
+          Class: name, Name: 'Student '+i, Number: i,
+          Color: 'green',
+          X: 30 + ((i-1)%7)*135,
+          Y: 30 + Math.floor((i-1)/7)*120
+        });
       }
-    });
-    document.addEventListener("mouseup", e=>{
-      if(isDragging){
-        isDragging=false;
+      currentClass = name;
+      buildClassDropdown();
+      render();
+      saveStudents();
+    };
+
+    document.getElementById('addStudentBtn').onclick = () => {
+      if (!currentClass) return alert('Pick a class first');
+      const list = classes[currentClass];
+      const n = list.length + 1;
+      const s = {
+        Class: currentClass,
+        Name: 'New Student',
+        Number: n,
+        Color: 'green',
+        X: 40 + (Math.random()* (document.getElementById('canvas').clientWidth - 160)),
+        Y: 40 + (Math.random()* (document.getElementById('canvas').clientHeight - 120))
+      };
+      list.push(s);
+      render();
+      saveStudents();
+    };
+
+    // --- Render students & free-form dragging ---
+    function render(){
+      const canvas = document.getElementById('canvas');
+      canvas.innerHTML = '';
+      if (!currentClass || !classes[currentClass]) return;
+
+      classes[currentClass].forEach((s, idx) => {
+        const el = document.createElement('div');
+        el.className = 'student ' + (s.Color === 'red' ? 'red' : s.Color === 'yellow' ? 'yellow' : 'green');
+        el.style.left = (Number(s.X)||0) + 'px';
+        el.style.top  = (Number(s.Y)||0) + 'px';
+
+        el.innerHTML = `
+          <div class="num">${s.Number || idx+1}</div>
+          <div class="name">${s.Name}</div>
+        `;
+
+        // Dragging
+        let dragging = false;
+        let startX=0, startY=0, origX=0, origY=0;
+
+        el.addEventListener('mousedown', (e)=>{
+          dragging = true;
+          el.style.cursor = 'grabbing';
+          startX = e.clientX;
+          startY = e.clientY;
+          origX = Number(s.X)||0;
+          origY = Number(s.Y)||0;
+          e.stopPropagation();
+          e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e)=>{
+          if (!dragging) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+          const newX = Math.max(0, Math.min(origX + dx, canvas.clientWidth - el.offsetWidth));
+          const newY = Math.max(0, Math.min(origY + dy, canvas.clientHeight - el.offsetHeight));
+          s.X = newX; s.Y = newY;
+          el.style.left = newX + 'px';
+          el.style.top  = newY + 'px';
+        });
+
+        document.addEventListener('mouseup', ()=>{
+          if (dragging) {
+            dragging = false;
+            el.style.cursor = 'grab';
+            saveStudents(); // persist new X/Y
+          }
+        });
+
+        // Double-click to open modal
+        el.addEventListener('dblclick', ()=>{
+          selectedStudent = s;
+          openModal(s);
+        });
+
+        canvas.appendChild(el);
+      });
+    }
+
+    // --- Modal logic ---
+    const modal = document.getElementById('reasonModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const renameInput = document.getElementById('renameInput');
+    const numberInput = document.getElementById('numberInput');
+
+    function openModal(student){
+      modalTitle.textContent = student.Name;
+      renameInput.value = student.Name || '';
+      numberInput.value = student.Number || '';
+      modal.style.display = 'flex';
+    }
+    document.getElementById('closeModal').onclick = ()=> modal.style.display = 'none';
+
+    // Color buttons (Green, 4x Yellow reasons, Red)
+    document.querySelectorAll('.reason-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if (!selectedStudent) return;
+        const color = btn.dataset.color;
+        selectedStudent.Color = color; // 'green' | 'yellow' | 'red'
+        // (Optional: you could also log btn.dataset.reason somewhere)
+        render();
         saveStudents();
-      }
+        modal.style.display = 'none';
+      });
     });
-    canvas.appendChild(div);
-  });
-}
 
-// Modal functions
-function closeModal(){ document.getElementById("studentModal").style.display="none"; }
-function setColor(color){ if(!selectedStudent) return; selectedStudent.Color=color; saveStudents(); renderStudents(); closeModal(); }
-function renameStudent(){ if(!selectedStudent) return; selectedStudent.Name=document.getElementById("renameInput").value; saveStudents(); renderStudents(); closeModal(); }
-function renumberStudent(){ if(!selectedStudent) return; selectedStudent.Number=parseInt(document.getElementById("numberInput").value)||selectedStudent.Number; saveStudents(); renderStudents(); }
+    // Rename
+    document.getElementById('renameBtn').onclick = ()=>{
+      if (!selectedStudent) return;
+      const v = renameInput.value.trim();
+      if (!v) return;
+      selectedStudent.Name = v;
+      modalTitle.textContent = v;
+      render();
+      saveStudents();
+    };
 
-// Start
-loadStudents();
-</script>
+    // Renumber
+    document.getElementById('numberBtn').onclick = ()=>{
+      if (!selectedStudent) return;
+      const n = parseInt(numberInput.value, 10);
+      if (isNaN(n) || n < 1) return;
+      selectedStudent.Number = n;
+      render();
+      saveStudents();
+    };
+
+    // Kick off
+    window.addEventListener('load', loadStudents);
+  </script>
 </body>
 </html>
